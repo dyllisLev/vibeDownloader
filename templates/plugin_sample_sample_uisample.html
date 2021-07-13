@@ -1,0 +1,89 @@
+{% extends "base_with_popper.html" %}
+{% block content %}
+
+<div>
+  <div>
+   <strong>드롭다운 메뉴 샘플</strong>
+   {{macros.m_hr()}}
+   <div id="drop_down_sample">
+   </div>
+  </div>
+  {{macros.m_hr()}}
+  <div>
+   <strong>버튼툴팁 샘플</strong>
+   {{macros.m_hr()}}
+   <div id="btn_with_tooltip_sample">
+   </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+var sub = "{{arg['sub'] }}";
+/* 
+ js파일 필요 : base.html -> base_with_popper.html
+ m_button_tt(툴팁버튼), m_button_dd(드롭다운메뉴버튼) 함수는 base_with_popper.html에 정의됨 
+ */
+
+$(document).ready(function() {
+  make_drop_down_sample(); // 드롭다운 메뉴 샘플
+  make_btn_with_tooltip_sample(); // 버튼툴팁 샘플
+});
+
+
+/* 드롭다운 샘플 생성 */
+function make_drop_down_sample() {
+  //함수: m_button_dd(id, text, buttons, outline_color, pos='right')
+  var str = m_button_dd('more_action_btn', '드롭다운메뉴(left)', [{'btn_id':'btn_menu_01', 'name':'menu_01', 'data':[{'key':'id', 'value':'menu_01'}]},{'btn_id':'btn_menu_02', 'name':'menu_02', 'data':[{'key':'id', 'value':'menu_02'}]},{'btn_id':'btn_menu_03', 'name':'menu_03', 'data':[{'key':'id', 'value':'menu_03'}]},], 'primary', 'left');
+  str += m_button_dd('more_action_btn', '드롭다운메뉴(right)', [{'btn_id':'btn_menu_01', 'name':'menu_01', 'data':[{'key':'id', 'value':'menu_01'}]},{'btn_id':'btn_menu_02', 'name':'menu_02', 'data':[{'key':'id', 'value':'menu_02'}]},{'btn_id':'btn_menu_03', 'name':'menu_03', 'data':[{'key':'id', 'value':'menu_03'}]},], 'info', 'right');
+  document.getElementById('drop_down_sample').innerHTML = m_button_group(str);
+}
+
+/* 버튼툴팁 샘플 생성 */
+function make_btn_with_tooltip_sample() {
+  // 함수: m_button_tt(id, text, data, outline_color, tooltip='', pos='down', size='medium') {
+  var str = m_button_tt('btn_01', 'btn_01', [{'key':'id', 'value':'btn_01'}], 'info', 'btn_01툴팁: info, left, small', 'left', 'small');
+  str += m_button_tt('btn_02', 'btn_02', [{'key':'id', 'value':'btn_02'}], 'success', 'btn_02툴팁: success, down, medium', 'down', 'medium');
+  str += m_button_tt('btn_03', 'btn_03', [{'key':'id', 'value':'btn_03'}], 'warning', 'btn_03툴팁: warning, up, xlarge', 'up', 'xlarge');
+  str += m_button_tt('btn_04', 'btn_04', [{'key':'id', 'value':'btn_04'}], 'primary', 'btn_04툴팁: primary, up, fit', 'up', 'fit');
+  str += m_button_tt('btn_05', 'btn_05', [{'key':'id', 'value':'btn_05'}], 'danger', 'btn_05툴팁: danger, right, large', 'right', 'large');
+  document.getElementById('btn_with_tooltip_sample').innerHTML = m_button_group(str);
+}
+	  
+/* 버튼 툴팁 포함 버튼 함수 */
+/*
+function m_button_tt(id, text, data, outline_color, tooltip='', pos='down', size='medium') {
+  var str = '<button id="'+id+'" name="'+id+'" class="btn btn-sm btn-outline-'+outline_color+'" '
+  if (tooltip == '') str += ' aria-label="' +text+'"';
+  else str += ' aria-label="' +tooltip+'"';
+  str += ' data-balloon-pos="' +pos+ '" data-balloon-length="'+size+'"';
+  for ( var i in data) {
+    str += ' data-' + data[i].key + '="' + data[i].value+ '" '
+  }
+  str += '>' + text + '</button>';
+  return str;
+}*/
+
+/* 드롭다운 메뉴 버튼 함수 */
+/*
+function m_button_dd(id, text, buttons, outline_color) {
+  var str = '<div class="dropdown">';
+  str += '<button id="'+id+'" class="btn dropdown-toggle btn-sm btn-outline-'+outline_color+'" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'+text+'</button>';
+  str += '<div class="dropdown-menu dropdown-menu-right' aria-labelledby="'+id+'">';
+  for (var i in buttons) {
+    if (buttons[i].btn_id == 'divider') {
+      str += '<div class="dropdown-divider"></div>';
+      continue;
+    }
+    str += '<button class="dropdown-item" type="button" id="'+buttons[i].btn_id+'"';
+    data = buttons[i].data;
+    for (var j in data) {
+      str += ' data-'+data[j].key+'="'+data[j].value+'" ';
+    }
+    str += '>'+buttons[i].name+'</button>';
+  }
+  str += '</div></div>';
+  return str;
+} */
+
+</script>    
+{% endblock %}
