@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block content %}
+<style type="text/css">
+  .img_thumb { 
+    width: 40px;
+    height: 40px;
+  }
+</style>
+<div>
+  <div class="card text-center">
+    <div class="card-header">
+      <ul class="nav nav-tabs card-header-tabs">
+        <li class="nav-item">
+          <a class="nav-link active" href="#">국내</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">해외</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">모든앨범</a>
+        </li>
+      </ul>
+    </div>
+      <div id="list" class="card-body">
+      </div>
+    </div>
+  </div>
+</div>
+<div class="audioPlay" hidden>
+  <video id="video"></video>
+</div>
+<div class="modalinner">
+  <div class="modalinnerbyAlbum"></div>
+  <div class="modalinnerbyArtist"></div>  
+</div>
+<!-- Modal -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="{{ url_for('.static', filename='modal.js') }}?v={{arg['v'] }}"></script>
+<script type="text/javascript">
+var package_name = "{{arg['package_name'] }}";
+var sub = "{{arg['sub'] }}";
+var current_data = null;
+var current_page = 1;
+var formData = null;
+
+$(document).ready(function(){
+  $('.card-header-tabs .nav-link').first().click();
+});
+
+function request_search(search) {
+  
+  $.ajax({
+    url: '/' + package_name + '/ajax/'+sub+'/new',
+    type: "POST", 
+    cache: false,
+    data: {'search':search},
+    dataType: "json",
+    success: function (data) {
+      if (scroll == true) {
+        window.scrollTo(0,0);
+      }
+      if( data.ret == "success" ){
+        make_list(data.content.response.result.chart)
+      }
+    }
+  });
+}
+
+// 페이지 구성 함수
+function make_list(data) {
+
+  html = '';
+  for( i = 0 ; i < Object.keys(data.albums.album).length ; i++ ){
+
+    album = data.albums.album[i];
+    if(i % 4 == 0){
+      html += '<div class="card-deck" style="padding-bottom: 15px;">';
+    }
+    html += '  <div class="card" style="width: 15rem; max-width: 15rem">';
+    html += '    <img class="card-img-top" src="'+album.imageUrl+'" alt="Card image cap">';
+    html += '    <div class="card-body">';
+    html += '      <h6 class="card-title" style="height:40px">'+album.albumTitle+'</h6>';
+    
+    
+    artistName = "";
+    if( album.artists.artist[0] == undefined ){
+      artistName = album.artists.artist.artistName;
+    }else{
+      for( var j in album.artists.artist){
+        if( artistName != "" ){
+          artistName += ", ";
+        }
+        artistName += album.artists.artist[j].artistName;
+      }
+    }
+    html += '      <p class="card-text" style="height:40px">'+artistName+'</p>';
+    html += '      <p class="card-text">release. '+album.releaseDate+'</p>';
+    html += '      <a href="#" class="btn btn-primary albumView" alt='+album.albumId+'>앨범보기</a>';
+    html += '    </div>';
+    html += '  </div>';
+
+
+    if(i % 4 == 3){
+      html += '</div>';
+    }
+  }
+
+  document.getElementById("list").innerHTML = html;
+}
+
+
+$("body").on('click', '.card-header-tabs .nav-link', function(e){
+  e.preventDefault();
+  $('.card-header-tabs .nav-link').removeClass("active");
+  $(this).addClass("active");
+  request_search($(this).text());
+  
+});
+
+$("body").on('click', '.albumView', function(e){
+  e.preventDefault();
+  albumModalView($(this).attr("alt"));
+});
+$("body").on('click', '.artistView', function(e){
+  e.preventDefault();
+  artistModalView($(this).attr("alt"));
+});
+
+</script>    
+{% endblock %}

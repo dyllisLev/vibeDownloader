@@ -24,24 +24,28 @@ ModelSetting = P.ModelSetting
 
 #########################################################
 
-class LogicSample(LogicModuleBase):
+class LogicSetting(LogicModuleBase):
     db_default = {
         'db_version' : '1',
         # 스케쥴러
-        'sample_interval'   : '60',
-        'sample_auto_start' : 'False',
+        # 'sample_interval'   : '60',
+        # 'sample_auto_start' : 'False',
 
         # 유형별 설정값
-        'sample_boolean'    : 'True',
-        'sample_text'       : u'텍스트 설정값',
-        'sample_path'       : os.path.join(path_data, package_name),
-        'sample_integer'    : u'30',
-        'sample_list'       : u'가|나|다|라|마',
+        'naverId'    : 'id',
+        'naverPw'    : u'pass',
+        'savePath'       : os.path.join(path_data, package_name),
+        'saveFileName'   : '%albumTitle% - %trackNumber% - %trackTitle% - %artist%',
+        'savePathByTOP100'       : os.path.join(path_data, package_name, "TOP100", "%today%"),
+        'saveFileNameByTOP100'       : '%rank% - %trackTitle% - %artist%',
+        'savePathByAlbum'       : os.path.join(path_data, package_name, "album"),
+        'saveFileNameByAlbum'       : '%albumTitle% - %trackNumber% - %trackTitle% - %artist%',
+        'ffmpegDownload' : False,
     }
 
     def __init__(self, P):
-        super(LogicSample, self).__init__(P, 'setting') # 해당모듈의 기본 sub
-        self.name = 'sample'    # 모듈명
+        super(LogicSetting, self).__init__(P, 'setting') # 해당모듈의 기본 sub
+        self.name = 'setting'    # 모듈명
 
     # 플러그인 로딩시 실행할 내용이 있으면 작성
     def plugin_load(self):
@@ -57,7 +61,8 @@ class LogicSample(LogicModuleBase):
             job_id = '%s_%s' % (self.P.package_name, self.name)
             arg['scheduler'] = str(scheduler.is_include(job_id))
             arg['is_running'] = str(scheduler.is_running(job_id))
-        return render_template('{package_name}_{module_name}_{sub}.html'.format(package_name=P.package_name, module_name=self.name, sub=sub), arg=arg)
+        P.logger.debug('{package_name}_{sub}.html'.format(package_name=P.package_name, module_name=self.name, sub=sub))
+        return render_template('{package_name}_{sub}.html'.format(package_name=P.package_name,sub=sub), arg=arg)
 
     # 각 페이지에서의 요청 처리
     def process_ajax(self, sub, req):
@@ -66,28 +71,19 @@ class LogicSample(LogicModuleBase):
             logger.debug('AJAX %s', sub)
             #logger.debug(req.form)
             if sub == 'register_item':
-                ret = LogicSample.register_item(req.form)
+                ret = LogicSetting.register_item(req.form)
             elif sub == 'modify_item':
-                ret = LogicSample.modify_item(req.form)
+                ret = LogicSetting.modify_item(req.form)
             elif sub == 'delete_item':
-                ret = LogicSample.delete_item(req.form)
+                ret = LogicSetting.delete_item(req.form)
             elif sub == 'web_list':
-                ret = ModelSampleItem.web_list(req)
+                ret = ModelItem.web_list(req)
             return jsonify(ret)
 
         except Exception as e: 
             logger.error('Exception:%s', e)
             logger.error(traceback.format_exc())
             return jsonify({'ret':'exception', 'msg':str(e)})
-
-    # 스케쥴러에 의한 메인 로직 작동
-    def scheduler_function(self):
-        logger.debug('scheduler function!!!!!!!!!!!!!!')
-        if app.config['config']['use_celery']:
-            result = LogicSample.task.apply_async()
-            result.get()
-        else:
-            LogicSample.task()
 
     #########################################################
     def db_migration(self):
@@ -149,12 +145,11 @@ class LogicSample(LogicModuleBase):
     @staticmethod
     def register_item(req):
         try:
-            string = req['sample_string']
-            integer = int(req['sample_integer'])
-            boolean =  True if req['sample_boolean'] == 'True' else False
-            imgurl = req['sample_imgurl']
+            naverId = req['naverId']
+            naverPw = req['naverPw']
+            savePath = req['savePath']
 
-            entity = ModelSampleItem(string, integer, boolean, imgurl)
+            entity = ModelItem(naverId, naverPw, savePath)
             entity.save()
 
             return {'ret':'success', 'msg':'아이템 등록완료'}
@@ -163,44 +158,28 @@ class LogicSample(LogicModuleBase):
             logger.debug(traceback.format_exc())
             return {'ret':'error', 'msg':str(e)}
 
-    @staticmethod
-    def modify_item(req):
-        try:
-            item_id = int(req['item_id'])
+    # @staticmethod
+    # def modify_item(req):
+    #     try:
+    #         item_id = int(req['item_id'])
 
-            entity = ModelSampleItem.get_by_id(item_id)
-            entity.sample_string = req['sample_string']
-            entity.sample_integer = int(req['sample_integer'])
-            entity.sample_boolean = True if req['sample_boolean'] == 'True' else False
-            entity.sample_imgurl = req['sample_imgurl']
-            entity.save()
+    #         entity = ModelItem.get_by_id(item_id)
+    #         entity.sample_string = req['sample_string']
+    #         entity.sample_integer = int(req['sample_integer'])
+    #         entity.sample_boolean = True if req['sample_boolean'] == 'True' else False
+    #         entity.sample_imgurl = req['sample_imgurl']
+    #         entity.save()
 
-            return {'ret':'success', 'msg':'아이템 수정완료'}
-        except Exception as e:
-            logger.debug('Exception:%s', e)
-            logger.debug(traceback.format_exc())
-            return {'ret':'error', 'msg':str(e)}
-
-    @staticmethod
-    def delete_item(req):
-        try:
-            item_id = int(req['item_id'])
-
-            entity = None
-            entity = ModelSampleItem.get_by_id(item_id)
-            if entity == None:
-                return {'ret':'error', 'msg':'아이템이 존재하지 않습니다'}
-            entity.delete(entity.id)
-            return {'ret':'success', 'msg':'아이템 삭제완료'}
-        except Exception as e:
-            logger.debug('Exception:%s', e)
-            logger.debug(traceback.format_exc())
-            return {'ret':'error', 'msg':str(e)}
+    #         return {'ret':'success', 'msg':'아이템 수정완료'}
+    #     except Exception as e:
+    #         logger.debug('Exception:%s', e)
+    #         logger.debug(traceback.format_exc())
+    #         return {'ret':'error', 'msg':str(e)}
 
 
 #########################################################
 # DB 모델 정의: @classmethod 사용
-class ModelSampleItem(db.Model):
+class ModelItem(db.Model):
     __tablename__ = '%s_item' % package_name
     __table_args__ = {'mysql_collate': 'utf8_general_ci'}
     __bind_key__ = package_name
@@ -209,17 +188,16 @@ class ModelSampleItem(db.Model):
     created_time = db.Column(db.DateTime)
     reserved = db.Column(db.JSON)
     # 사용할 필드 정의
-    sample_string = db.Column(db.String)
-    sample_integer = db.Column(db.Integer)
-    sample_boolean = db.Column(db.Boolean)
-    sample_imgurl = db.Column(db.String)
+    naverId = db.Column(db.String)
+    naverPw = db.Column(db.String)
+    savePath = db.Column(db.String)
 
-    def __init__(self, string, integer, boolean, imgurl):
+    def __init__(self, naverId, naverPw, savePath):
         self.created_time = datetime.now()
-        self.sample_string = py_unicode(string)
-        self.sample_integer = integer
-        self.sample_boolean = boolean
-        self.sample_imgurl = imgurl
+        self.naverId = py_unicode(naverId)
+        self.naverPw = py_unicode(naverPw)
+        self.savePath = py_unicode(savePath)
+        
 
     def __repr__(self):
         return repr(self.as_dict())

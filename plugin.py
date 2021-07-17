@@ -19,18 +19,18 @@ from framework.common.plugin import get_model_setting, Logic, default_route
 class P(object):
     package_name = __name__.split('.')[0]
     logger = get_logger(package_name)
-    blueprint = Blueprint(package_name, package_name, url_prefix='/%s' %  package_name, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
+    blueprint = Blueprint(package_name, package_name, url_prefix='/%s' %  package_name, template_folder=os.path.join(os.path.dirname(__file__), 'templates'), static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 
     # 메뉴 정의
     menu = {
-        'main' : [package_name, u'플러그인샘플'],
+        'main' : [package_name, u'VIBE 다운로드'],
         'sub' : [
-            ['sample', u'sample'], ['log', u'로그']
+            ['setting', u'설정'],['download', u'다운로드'], ['log', u'로그']
         ],
-        'category' : 'tool',
+        'category' : 'service',
         'sub2' : {
-            'sample': [
-                ['setting',u'설정'],['list', u'목록'], ['cardlist', u'카드목록'], ['uisample', u'UI샘플']
+            'download': [
+                ['TOP100',u'TOP100'],['NEW', u'최신앨범'], ['search', u'검색']
             ],
         },
     }
@@ -38,17 +38,17 @@ class P(object):
     plugin_info = {
         'version' : '0.1.0.0',
         'name' : package_name,
-        'category_name' : 'tool',
+        'category_name' : 'service',
         'icon' : '',
         'developer' : u'orial',
-        'description' : u'Plugin sample for SJVA',
-        'home' : 'https://github.com/byorial/%s' % package_name,
+        'description' : u'VIBE 다운로드 for SJVA',
+        'home' : 'https://github.com/dyllisLev/%s' % package_name,
         'more' : '',
     }
     ModelSetting = get_model_setting(package_name, logger)
     logic = None
     module_list = None
-    home_module = 'sample'  # 기본모듈
+    home_module = 'setting'  # 기본모듈
 
 
 def initialize():
@@ -58,8 +58,10 @@ def initialize():
         Util.save_from_dict_to_json(P.plugin_info, os.path.join(os.path.dirname(__file__), 'info.json'))
 
         # 로드할 모듈 정의
-        from .sample import LogicSample
-        P.module_list = [LogicSample(P)]
+        from .setting import LogicSetting
+        from .download import LogicDownload
+        
+        P.module_list = [LogicSetting(P), LogicDownload(P)]
 
         P.logic = Logic(P)
         default_route(P)
@@ -72,7 +74,7 @@ def initialize():
 def baseapi(sub):                                                                                                                 
     P.logger.debug('API: %s', sub)
     try:
-        from .sample import LogicSample
+        from .setting import LogicSetting
         P.logger.debug(request.form)
         return 'ok'
     except Exception as e: 

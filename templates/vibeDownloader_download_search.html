@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+{% block content %}
+<style type="text/css">
+  .img_thumb { 
+    width: 40px;
+    height: 40px;
+  }
+</style>
+<div class="pb-5">
+  <div class="input-group input-group-lg">
+    <input type="text" class="form-control button-search-input" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-lg">
+    <div class="input-group-prepend">
+      <button class="btn btn-outline-secondary button-search" type="button">검색</button>
+    </div>
+  </div>
+  <div class="pt-3">
+    <h5><strong>노래</strong></h5>
+  </div>
+  <div class="trackList">
+    <div style="overflow: auto;height: 361px;">
+      <table class="table table-striped table-lm" cellspacing="0" width="100%">
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="pt-3">
+    <h5><strong>앨범</strong></h5>
+  </div>
+  <div style="overflow-x: hidden; overflow-y: auto;height: 700px;">
+    <div class="albumList">
+    </div>
+  </div>
+  <div class="pt-3">
+    <h5><strong>아티스트</strong></h5>
+  </div>
+  <div style="overflow-x: hidden; overflow-y: auto;height: 700px;">
+    <div class="artistList">
+    </div>
+  </div>
+</div>
+<div class="audioPlay" hidden>
+  <video id="video"></video>
+</div>
+<div class="modalinner">
+  <div class="modalinnerbyAlbum"></div>
+  <div class="modalinnerbyArtist"></div>  
+</div>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="{{ url_for('.static', filename='modal.js') }}?v={{arg['v'] }}"></script>
+<script type="text/javascript">
+var package_name = "{{arg['package_name'] }}";
+var sub = "{{arg['sub'] }}";
+var current_data = null;
+var current_page = 1;
+var formData = null;
+
+$(document).ready(function(){
+  
+  
+  $('.card-deck').addClass("pt-3");
+  // $(".button-search-input").val("백지영");
+  // request_search();
+  $('.trackList').prev().hide();
+  $('.albumList').parent().prev().hide();
+  $('.artistList').parent().prev().hide();
+});
+
+
+$(".button-search-input").on("keyup",function(key){
+  if(key.keyCode==13) {
+    request_search();
+  }
+});
+$(".button-search").click("keyup",function(key){
+  request_search();
+});
+
+function request_search() {
+  
+  $.ajax({
+    url: '/' + package_name + '/ajax/'+sub+'/search',
+    type: "POST", 
+    cache: false,
+    data: {'keyword':$(".button-search-input").val()},
+    dataType: "json",
+    success: function (data) {
+      if (scroll == true) {
+        window.scrollTo(0,0);
+      }
+      if( data.ret == "success" ){
+        trackResult(data.trackInfo);
+        console.log("trackResult end");
+        albumResult(data.albumInfo);
+        console.log("albumResult end");
+        artistResult(data.artistInfo);
+        console.log("artistResult end");
+        downloadEventAdd("search");
+      }
+    }
+  });
+}
+
+
+function trackResult(data, isAdd) {
+
+  
+  html = '';
+  if( data.trackTotalCount > 0 ){
+    viewSize = $('.trackList #btn_download').length;
+
+    cnt = data.tracks.track.length;
+    if( data.tracks.track.length == undefined ){
+      cnt = 1;
+    }
+
+    for( i = 0 ; i < cnt ; i++ ){
+      if( data.tracks.track.length == undefined ){
+        track = data.tracks.track;
+      }else{
+        track = data.tracks.track[i];
+      }
+      
+      html += '<tr>';
+      html += '  <td>';
+      html += '    <img src="'+track.album.imageUrl+'" style="max-width: 60px;">';
+      html += '  </td>';
+      html += '  <td>'+track.trackTitle+'</td>';
+
+      tmp = "";
+      if( track.artists.artist[0] == undefined ){
+        artistName = track.artists.artist.artistName;
+        artistId = track.artists.artist.artistId;
+        tmp = '<a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView">'+ artistName + '</a>';
+      }else{
+        for( var j in track.artists.artist){
+          if( j > 0 ){
+            tmp += ", ";
+          }
+          artistName = track.artists.artist[j].artistName;
+          artistId = track.artists.artist[j].artistId;
+          tmp += '<a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView">'+ artistName + '</a>';
+        }
+      }
+      
+      html += '  <td>'+tmp+'</td>';
+
+      
+      html += '  <td><a href="#" alt = "'+track.album.albumId+'" class="alert-link text-dark albumView">'+track.album.albumTitle+'</a></td>';
+      html += '  <td>';
+      html += '    <div class="btn-group btn-group-sm flex-wrap mr-2" role="group">';
+      html += '      <button id="btn_download" name="btn_download" class="btn btn-sm btn-outline-success" data-trackid="'+track.trackId+'">다운로드</button>';
+      html += '      <button id="btn_play" name="btn_play" class="btn btn-sm btn-outline-success" data-trackid="'+track.trackId+'">재생</button>';
+      html += '    </div>';
+      html += '  </td>';
+      html += '</tr>';
+      viewSize++;
+    }
+    
+    if( data.trackTotalCount > viewSize){
+      html += '<tr>';
+      html += '  <td colspan="5">';
+      html += '  <div class="container">';
+      html += '   <div class="row justify-content-md-center">';
+      html += '     <div class="col-md-auto">';
+      html += '    <div class="btn-group btn-group-sm flex-wrap mr-2" role="group">';
+      html += '      <button id="btn_add_view_track" name="btn_add_view_track" class="btn btn-sm btn-outline-primary" data-row="'+viewSize+'">더보기</button>';
+      html += '    </div>';
+      html += '     </div>';
+      html += '   </div>';
+      html += '  </td>';
+      html += '</tr>';
+    }
+    
+    if( isAdd == "add" ){
+      $('.trackList tbody tr:last').remove();
+      html = $('.trackList tbody').html() + html;
+    }
+    
+    
+    $('.trackList tbody').html(html);
+    $('.trackList').prev().show();
+  }else{
+    $('.trackList tbody').html(html);
+    $('.trackList').prev().hide();
+  }
+
+}
+$("body").on('click', '#btn_add_view_track', function(e){
+    e.preventDefault();
+    
+    var start = $(this).data('row')+1;
+    
+    $.ajax({
+      url: '/' + package_name + '/ajax/'+sub+'/searchByTrack',
+      type: "POST", 
+      cache: false,
+      data: {'keyword':$(".button-search-input").val(),"start":start},
+      dataType: "json",
+      success: function (data) {
+        if( data.ret == "success" ){
+          trackResult(data.trackInfo, "add");
+        }
+      }
+    });
+});
+
+$("body").on('click', '#btn_add_view_album', function(e){
+    e.preventDefault();
+    
+    var start = $(this).data('row')+1;
+    
+    $.ajax({
+      url: '/' + package_name + '/ajax/'+sub+'/searchByAlbum',
+      type: "POST", 
+      cache: false,
+      data: {'keyword':$(".button-search-input").val(),"start":start},
+      dataType: "json",
+      success: function (data) {
+        if( data.ret == "success" ){
+          albumResult(data.albumInfo, "add");
+        }
+      }
+    });
+});
+
+function albumResult(data, isAdd) {
+
+  html = '';
+  
+  if( data.albumTotalCount > 0 ){
+    
+    viewSize = $('.albumList .card').length;
+
+    cnt = data.albums.album.length;
+    if( data.albums.album.length == undefined ){
+      cnt = 1;
+    }
+
+    for( i = 0 ; i < cnt ; i++ ){
+      if( data.albums.album.length == undefined ){
+        album = data.albums.album;
+      }else{
+        album = data.albums.album[i];
+      }
+      
+      if(i % 5 == 0){
+        html += '<div class="card-deck">';
+      }
+      html += '  <div class="card" style="width: 196px; max-width: 196px">';
+      html += '    <img src="'+album.imageUrl+'" class="card-img-top" alt="...">';
+      html += '    <div class="card-body">';
+      html += '      <h5 class="card-title"><a href="#" alt = "'+album.albumId+'" class="alert-link text-dark albumView">'+album.albumTitle+'</a></h5>';
+      
+      tmp = "";
+      if( album.artists.artist[0] == undefined ){
+        artistName = album.artists.artist.artistName;
+        artistId = album.artists.artist.artistId;
+        tmp = '<a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView">'+ artistName + '</a>';
+      }else{
+        for( var j in album.artists.artist){
+          if( j > 0 ){
+            tmp += ", ";
+          }
+          artistName = album.artists.artist[j].artistName;
+          artistId = album.artists.artist[j].artistId;
+          tmp += '<a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView">'+ artistName + '</a>';
+        }
+      }
+
+      html += '      <p class="card-text">'+tmp+'</p>';
+      html += '    </div>';
+      html += '  </div>';
+      if(i % 5 == 4){
+        html += '</div>';
+      }
+      // track = data.tracks.track[i];
+      viewSize++;
+    }
+
+    if( data.albumTotalCount > viewSize){
+      html += '<div>';
+      html += '  <div class="container pt-4">';
+      html += '   <div class="row justify-content-md-center">';
+      html += '     <div class="col-md-auto">';
+      html += '       <div class="btn-group btn-group-lg flex-wrap mr-2" role="group">';
+      html += '        <button id="btn_add_view_album" name="btn_add_view_album" class="btn btn-lg btn-outline-primary" data-row="'+viewSize+'">더보기</button>';
+      html += '       </div>';
+      html += '     </div>';
+      html += '   </div>';
+      html += '  </div>';
+      html += '</div>';
+    }
+
+    if( isAdd == "add" ){
+      $('.albumList > div:last').remove();
+      html = $('.albumList').html() + html;
+    }
+
+    $('.albumList').html(html);
+    $('.albumList').parent().prev().show();
+    $('.albumList .card-deck').addClass("pt-3");
+  }else{
+    $('.albumList').html(html);
+    $('.albumList').parent().prev().hide();
+  }
+
+}
+function artistResult(data) {
+
+  html = '';
+  
+  if( data.artistTotalCount > 0 ){
+
+    cnt = data.artists.artist.length;
+    if( data.artists.artist.length == undefined ){
+      cnt = 1;
+    }
+
+    for( i = 0 ; i < cnt ; i++ ){
+
+      if( data.artists.artist.length == undefined ){
+        artist = data.artists.artist;
+      }else{
+        artist = data.artists.artist[i];
+      }
+
+      
+      if(i % 5 == 0){
+        html += '<div class="card-deck">';
+      }
+      html += '  <div class="card" style="width: 196px; max-width: 196px">';
+      html += '    <img src="'+artist.imageUrl+'" class="card-img-top" alt="..." onerror="artistImageErr(this);">';
+      html += '    <div class="card-body">';
+      html += '      <h5 class="card-title"><a href="#" alt = "'+artist.artistId+'" class="alert-link text-dark artistView">'+ artist.artistName + '</a></h5>';
+      if( artist.debutDate != null ){
+        html += '      <p class="card-text">'+artist.debutDate+'</p>';
+      }
+      html += '    </div>';
+      html += '  </div>';
+      if(i % 5 == 4){
+        html += '</div>';
+      }
+    }
+    $('.artistList').html(html);
+    $('.artistList').parent().prev().show();
+    $('.artistList .card-deck').addClass("pt-3");
+  }else{
+    $('.artistList').html(html);
+    $('.artistList').parent().prev().hide();
+  }
+}
+
+$("body").on('click', '.albumView', function(e){
+  e.preventDefault();
+  albumModalView($(this).attr("alt"));
+});
+$("body").on('click', '.artistView', function(e){
+  e.preventDefault();
+  artistModalView($(this).attr("alt"));
+});
+
+
+
+</script>    
+{% endblock %}
