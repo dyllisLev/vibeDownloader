@@ -124,6 +124,28 @@ class LogicSetting(LogicModuleBase):
     def initialize(self):
         try:
             # 플러그인 로딩시 실행할 것들: Thread나 Queue 생성, 전역변수나 설정값들 초기화 등 처리
+            try:
+                import xmltodict
+            except:
+                from framework import app
+                import os
+                try: os.system(f"{app.config['config']['pip']} install xmltodict")
+                except: pass
+            try:
+                import lzstring
+            except:
+                from framework import app
+                import os
+                try: os.system(f"{app.config['config']['pip']} install lzstring")
+                except: pass
+            try:
+                import mutagen
+            except:
+                from framework import app
+                import os
+                try: os.system(f"{app.config['config']['pip']} install mutagen")
+                except: pass
+
             pass
         except Exception as e: 
             P.logger.error('Exception:%s', e)
