@@ -60,21 +60,18 @@ def initialize():
             import xmltodict
         except:
             from framework import app
-            import os
             try: os.system(f"{app.config['config']['pip']} install xmltodict")
             except: pass
         try:
             import lzstring
         except:
             from framework import app
-            import os
             try: os.system(f"{app.config['config']['pip']} install lzstring")
             except: pass
         try:
             import mutagen
         except:
             from framework import app
-            import os
             try: os.system(f"{app.config['config']['pip']} install mutagen")
             except: pass
         # 로드할 모듈 정의
