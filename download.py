@@ -306,7 +306,13 @@ class LogicDownload(LogicModuleBase):
         try:
             # 여기다 로직 구현
             logger.debug('LogicDownload main process started!!!!')
-            LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download") == "True":
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("newAlbumDownload1") == "True":
+                logger.debug('신규 국내')
+            if P.ModelSetting.get("newAlbumDownload2") == "True":
+                logger.debug('신규 해외')
+            
             logger.debug('LogicDownload main process END!!!!')
             
         except Exception as e:

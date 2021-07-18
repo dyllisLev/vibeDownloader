@@ -41,6 +41,9 @@ class LogicSetting(LogicModuleBase):
         'savePathByAlbum'       : os.path.join(path_data, package_name, "album"),
         'saveFileNameByAlbum'       : '%albumTitle% - %trackNumber% - %trackTitle% - %artist%',
         'ffmpegDownload' : False,
+        'top100Download' : False,
+        'newAlbumDownload1' : False,
+        'newAlbumDownload2' : False,
         'albumId' : '',
     }
 
