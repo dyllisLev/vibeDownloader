@@ -145,7 +145,7 @@
    {{ macros.m_tab_content_end() }}
    {{ macros.m_tab_content_start('auto', false) }}
     {{ macros.setting_global_scheduler_sub_button(arg['scheduler'], arg['is_running']) }}
-    {{ macros.setting_input_text('setting_interval', '스케쥴링 실행 정보', value=arg['setting_interval'], col='3', desc=['Inverval(minute 단위)']) }}
+    {{ macros.setting_input_text('setting_interval', '스케쥴링 실행 정보', value=arg['setting_interval'], col='3', desc=['Inverval(minute 단위) 이나 Cron 설정']) }}
     {{ macros.setting_checkbox('top100Download', 'TOP100 다운로드', value=arg['top100Download'], desc='TOP100 다운로드') }}
     <!--
     {{ macros.setting_checkbox('newAlbumDownload1', '최신앨범[국내] 다운로드', value=arg['newAlbumDownload1'], desc='최신앨범[국내] 다운로드') }}
