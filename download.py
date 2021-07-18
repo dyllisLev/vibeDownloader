@@ -505,12 +505,7 @@ class LogicDownload(LogicModuleBase):
             lyric = ""
             if hasLyric == "Y":
                 lyric = xml[0][0][2].text
-                print( lyric )
-                try:
-                    from mutagen.id3 import ID3, USLT
-                except:
-                    from mutagen.id3 import ID3, USLT
-                
+                from mutagen.id3 import ID3, USLT
                 audio = ID3(filePath)
                 audio.add(USLT(text=lyric, lang="kor", desc=""))
                 audio.save()
