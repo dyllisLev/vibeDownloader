@@ -17,6 +17,8 @@ from framework.common.plugin import LogicModuleBase, default_route_socketio
 from framework.job import Job
 import xmltodict, json, rsa, uuid, lzstring, subprocess
 
+import xml.etree.ElementTree as ET
+
 # 패키지
 from .plugin import P
 logger = P.logger
@@ -457,6 +459,8 @@ class LogicDownload(LogicModuleBase):
         logger.debug("다운로드 시작" + trackId)
         logger.debug(P.ModelSetting.to_dict()['ffmpegDownload'])
         logger.debug( os.path.join(savePath, fileName) )
+        logger.debug( os.path.isfile( os.path.join(savePath, fileName) ) )
+        
         if os.path.isfile( os.path.join(savePath, fileName) ) :
             logger.debug("이미 같은파일이 있음")
         else:
@@ -472,7 +476,7 @@ class LogicDownload(LogicModuleBase):
                             # '"'++'"']
                 
                 output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
-                # logger.debug(output.communicate())
+                output.communicate()
             else:
                 logger.debug("다운로드 시작 by curl" + trackId)
                 resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
@@ -483,12 +487,37 @@ class LogicDownload(LogicModuleBase):
                 output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
                 # logger.debug(output.communicate())
             
+            LogicDownload.setLyrics(trackId, os.path.join(savePath, fileName))
             if type != "track":
                 import time
                 time.sleep(1)
         return True
 
+    @staticmethod
+    def setLyrics(trackId, filePath):
 
+        resp = requests.get('https://apis.naver.com/vibeWeb/musicapiweb/track/'+trackId+'/info')
+        
+        if resp.status_code == 200 :
+            result = LogicDownload.parse_xml(resp.text)
+            xml = ET.fromstring(resp.text)
+            hasLyric = xml[0][0][1].text
+            lyric = ""
+            if hasLyric == "Y":
+                lyric = xml[0][0][2].text
+                print( lyric )
+                try:
+                    from mutagen.id3 import ID3, USLT
+                except:
+                    from mutagen.id3 import ID3, USLT
+                
+                audio = ID3(filePath)
+                audio.add(USLT(text=lyric, lang="kor", desc=""))
+                audio.save()
+    @staticmethod
+    def parse_xml(xml):
+        return [dict([(j.tag, (j.text or list(filter(lambda l: l, [k.text for k in j.iter()])))) for j in i]) for i in ET.fromstring(xml)]
+    
     @staticmethod
     def encrypt(naver_id, naver_pw):
         key_str = requests.get('https://nid.naver.com/login/ext/keys.nhn').content.decode("utf-8")

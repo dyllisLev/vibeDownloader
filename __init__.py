@@ -19,3 +19,10 @@ except:
     import os
     try: os.system(f"{app.config['config']['pip']} install lzstring")
     except: pass
+try:
+    import mutagen
+except:
+    from framework import app
+    import os
+    try: os.system(f"{app.config['config']['pip']} install mutagen")
+    except: pass
