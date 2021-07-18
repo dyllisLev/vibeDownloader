@@ -28,8 +28,8 @@ class LogicSetting(LogicModuleBase):
     db_default = {
         'db_version' : '1',
         # 스케쥴러
-        # 'sample_interval'   : '60',
-        # 'sample_auto_start' : 'False',
+        'setting_interval'   : '60',
+        'auto_start' : 'False',
 
         # 유형별 설정값
         'naverId'    : 'id',
@@ -41,6 +41,7 @@ class LogicSetting(LogicModuleBase):
         'savePathByAlbum'       : os.path.join(path_data, package_name, "album"),
         'saveFileNameByAlbum'       : '%albumTitle% - %trackNumber% - %trackTitle% - %artist%',
         'ffmpegDownload' : False,
+        'albumId' : '',
     }
 
     def __init__(self, P):
@@ -51,6 +52,8 @@ class LogicSetting(LogicModuleBase):
     def plugin_load(self):
         self.db_migration()
         self.initialize()
+        if ModelSetting.query.filter_by(key='auto_start').first().value == 'True':
+            LogicSetting.scheduler_start()
 
     def process_menu(self, sub, req):
         # 각 메뉴들이 호출될때 필요한 값들을 arg에 넘겨주어야함
@@ -69,6 +72,7 @@ class LogicSetting(LogicModuleBase):
         try:
             ret = {'ret':'success', 'data':[]}
             logger.debug('AJAX %s', sub)
+            logger.debug('AJAX!!!!!!!!!!!!! %s', sub)
             #logger.debug(req.form)
             if sub == 'register_item':
                 ret = LogicSetting.register_item(req.form)
@@ -85,6 +89,25 @@ class LogicSetting(LogicModuleBase):
             logger.error(traceback.format_exc())
             return jsonify({'ret':'exception', 'msg':str(e)})
 
+    @staticmethod
+    def scheduler_start():
+        try:
+            job = Job(package_name, package_name+'_setting', ModelSetting.get('setting_interval'), LogicSetting.scheduler_function, u"vibeDownloader_setting", False)
+            scheduler.add_job_instance(job)
+        except Exception as e: 
+            logger.error('Exception:%s', e)
+            logger.error(traceback.format_exc())
+
+    # 스케쥴러에 의한 메인 로직 작동
+    @staticmethod
+    def scheduler_function():
+        logger.debug('scheduler function!!!!!!!!!!!!!!')
+        from .download import LogicDownload
+        if app.config['config']['use_celery']:
+            result = LogicDownload.task.apply_async()
+            result.get()
+        else:
+            LogicDownload.task()
     #########################################################
     def db_migration(self):
         try:
@@ -104,42 +127,6 @@ class LogicSetting(LogicModuleBase):
             P.logger.error(traceback.format_exc())
             return
 
-    #@staticmethod
-    @celery.task
-    def task():
-        try:
-            # 여기다 로직 구현
-            logger.debug('main process started!!!!')
-            
-            # 설정값 접근 및 출력 예제
-            # Boolean 값
-            sample_boolean = ModelSetting.get_bool('sample_boolean')
-            if sample_boolean: logger.debug('sample_boolean: True')
-            else: logger.debug('sample_boolean: False')
-
-            # 텍스트 값
-            sample_text = ModelSetting.get('sample_text')
-            logger.debug('sample_text: %s', sample_text)
-
-            # 숫자값
-            sample_integer = ModelSetting.get_int('sample_integer')
-            logger.debug('sample_int : %s', sample_integer)
-
-            # 리스트 처리-1
-            sample_pathes = ModelSetting.get_list('sample_path', ',')
-            for path in sample_pathes:
-                logger.debug('sample_path: %s', path)
-
-            # 리스트 처리-2
-            sample_list = ModelSetting.get_list('sample_list', '|')
-            for item in sample_list:
-                logger.debug('sample_item: %s', item)
-
-        except Exception as e:
-            logger.debug('Exception:%s', e)
-            logger.debug(traceback.format_exc())
-
-
     #########################################################
     # 필요함수 정의 및 구현부분
     @staticmethod
@@ -148,8 +135,9 @@ class LogicSetting(LogicModuleBase):
             naverId = req['naverId']
             naverPw = req['naverPw']
             savePath = req['savePath']
-
-            entity = ModelItem(naverId, naverPw, savePath)
+            auto_start = req['auto_start']
+            
+            entity = ModelItem(naverId, naverPw, savePath, auto_start)
             entity.save()
 
             return {'ret':'success', 'msg':'아이템 등록완료'}
@@ -157,25 +145,6 @@ class LogicSetting(LogicModuleBase):
             logger.debug('Exception:%s', e)
             logger.debug(traceback.format_exc())
             return {'ret':'error', 'msg':str(e)}
-
-    # @staticmethod
-    # def modify_item(req):
-    #     try:
-    #         item_id = int(req['item_id'])
-
-    #         entity = ModelItem.get_by_id(item_id)
-    #         entity.sample_string = req['sample_string']
-    #         entity.sample_integer = int(req['sample_integer'])
-    #         entity.sample_boolean = True if req['sample_boolean'] == 'True' else False
-    #         entity.sample_imgurl = req['sample_imgurl']
-    #         entity.save()
-
-    #         return {'ret':'success', 'msg':'아이템 수정완료'}
-    #     except Exception as e:
-    #         logger.debug('Exception:%s', e)
-    #         logger.debug(traceback.format_exc())
-    #         return {'ret':'error', 'msg':str(e)}
-
 
 #########################################################
 # DB 모델 정의: @classmethod 사용
@@ -191,14 +160,17 @@ class ModelItem(db.Model):
     naverId = db.Column(db.String)
     naverPw = db.Column(db.String)
     savePath = db.Column(db.String)
+    auto_start = db.Column(db.Boolean)
+    # setting_iinterval = db.Column(db.Integer)
 
-    def __init__(self, naverId, naverPw, savePath):
+    def __init__(self, naverId, naverPw, savePath, auto_start):
         self.created_time = datetime.now()
         self.naverId = py_unicode(naverId)
         self.naverPw = py_unicode(naverPw)
         self.savePath = py_unicode(savePath)
+        self.auto_start = auto_start
+        # self.setting_iinterval = setting_iinterval
         
-
     def __repr__(self):
         return repr(self.as_dict())
 

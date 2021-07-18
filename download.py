@@ -15,7 +15,6 @@ from framework.util import Util
 from framework.common.util import headers, get_json_with_auth_session
 from framework.common.plugin import LogicModuleBase, default_route_socketio
 from framework.job import Job
-
 import xmltodict, json, rsa, uuid, lzstring, subprocess
 
 # 패키지
@@ -31,6 +30,7 @@ class LogicDownload(LogicModuleBase):
     headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Whale/2.7.100.20 Safari/537.36'}
     data = None
     session = None
+    
     def __init__(self, P):
         super(LogicDownload, self).__init__(P, 'TOP100') # 해당모듈의 기본 sub
         self.name = 'download'    # 모듈명
@@ -73,6 +73,8 @@ class LogicDownload(LogicModuleBase):
                 ret = LogicDownload.searchByAlbum(req.form)
             elif sub == 'musicPlay':
                 ret = LogicDownload.musicPlay(req.form)
+            elif sub == 'allDownload':
+                ret = LogicDownload.allDownload(req.form)
                 
             #     ret = LogicDownload.register_item(req.form)
             # elif sub == 'modify_item':
@@ -106,42 +108,6 @@ class LogicDownload(LogicModuleBase):
             P.logger.error('Exception:%s', e)
             P.logger.error(traceback.format_exc())
             return
-
-    # #@staticmethod
-    # @celery.task
-    # def task():
-    #     try:
-    #         # 여기다 로직 구현
-    #         logger.debug('main process started!!!!')
-            
-    #         # 설정값 접근 및 출력 예제
-    #         # Boolean 값
-    #         sample_boolean = ModelSetting.get_bool('sample_boolean')
-    #         if sample_boolean: logger.debug('sample_boolean: True')
-    #         else: logger.debug('sample_boolean: False')
-
-    #         # 텍스트 값
-    #         sample_text = ModelSetting.get('sample_text')
-    #         logger.debug('sample_text: %s', sample_text)
-
-    #         # 숫자값
-    #         sample_integer = ModelSetting.get_int('sample_integer')
-    #         logger.debug('sample_int : %s', sample_integer)
-
-    #         # 리스트 처리-1
-    #         sample_pathes = ModelSetting.get_list('sample_path', ',')
-    #         for path in sample_pathes:
-    #             logger.debug('sample_path: %s', path)
-
-    #         # 리스트 처리-2
-    #         sample_list = ModelSetting.get_list('sample_list', '|')
-    #         for item in sample_list:
-    #             logger.debug('sample_item: %s', item)
-
-    #     except Exception as e:
-    #         logger.debug('Exception:%s', e)
-    #         logger.debug(traceback.format_exc())
-
 
     #########################################################
     # 필요함수 정의 및 구현부분
@@ -317,8 +283,63 @@ class LogicDownload(LogicModuleBase):
                     return {'ret':'success', 'content':trackInfo}
                 else:
                     return {'ret':'failed'}
+
+    @staticmethod
+    def allDownload(req):
         
+        downloadType = req['type']
+        
+        logger.debug( downloadType )
+        if downloadType == "TOP100":
+            thread = threading.Thread(target=LogicDownload.musicDownloadTOP100, args=())
+            thread.setDaemon(True)
+            thread.start()
+        elif downloadType == "album":
+            P.ModelSetting.set("albumId", req['albumId'])
+            thread = threading.Thread(target=LogicDownload.musicDownloadAlbum, args=())
+            thread.setDaemon(True)
+            thread.start()
+        return {'ret':'success'}
+
+    @celery.task
+    def task():
+        try:
+            # 여기다 로직 구현
+            logger.debug('LogicDownload main process started!!!!')
+            LogicDownload.musicDownloadTOP100()
+            logger.debug('LogicDownload main process END!!!!')
+            
+        except Exception as e:
+            logger.debug('Exception:%s', e)
+            logger.debug(traceback.format_exc())
     
+    @staticmethod
+    def musicDownloadTOP100():
+        logger.debug('LogicDownload musicDownloadTOP100 process started!!!!')
+        info = LogicDownload.top100List()
+        for track in info['content']['response']['result']['chart']['items']['tracks']['track']:
+            result = LogicDownload.musicDownload(track, "TOP100")
+
+        from framework import socketio
+        data = {'type':'success', 'msg':'TOP100 다운로드 완료.'}
+        socketio.emit('notify', data, namespace='/framework', broadcast=True)
+        
+        logger.debug('LogicDownload musicDownloadTOP100 process END!!!!')
+    
+    @staticmethod
+    def musicDownloadAlbum():
+        logger.debug('LogicDownload musicDownloadAlbum process started!!!!')
+        
+        info = LogicDownload.albumInfo(P.ModelSetting.to_dict())
+        for track in info['albumTracks']['response']['result']['tracks']['track']:
+            result = LogicDownload.musicDownload(track, "album")
+        
+        from framework import socketio
+        data = {'type':'success', 'msg':'앨범 다운로드 완료.'}
+        socketio.emit('notify', data, namespace='/framework', broadcast=True)
+        
+        logger.debug('LogicDownload musicDownloadAlbum process END!!!!')
+
     @staticmethod
     def musicDownload(track, type):
 
@@ -429,34 +450,36 @@ class LogicDownload(LogicModuleBase):
 
         logger.debug("다운로드 시작" + trackId)
         logger.debug(P.ModelSetting.to_dict()['ffmpegDownload'])
-        if P.ModelSetting.to_dict()['ffmpegDownload'] == "True":
-            logger.debug("다운로드 시작 by ffmpeg" + trackId)
-            resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&play.mediaSourceType=AAC_320_ENC', data=LogicDownload.data, headers=LogicDownload.headers)
-            rj = resp.json()
-            musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
-            logger.debug( os.path.join(savePath, fileName) )
-            logger.debug( musicDownloadUrl )
-            command = ['ffmpeg', '-y', '-i', str( musicDownloadUrl ), '-acodec', 'mp3', '-ab', '320k', 
-                        '-metadata', 'title='+trackTitle, '-metadata', 'artist='+artist , '-metadata', 'album='+albumTitle, '-metadata', 'track='+trackNumber, 
-                        '-metadata', 'album_artist='+artist, os.path.join(savePath, fileName)]
-                        # '"'++'"']
-            
-            output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
-            logger.debug(output.communicate())
+        logger.debug( os.path.join(savePath, fileName) )
+        if os.path.isfile( os.path.join(savePath, fileName) ) :
+            logger.debug("이미 같은파일이 있음")
         else:
-            logger.debug("다운로드 시작 by curl" + trackId)
-            resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
-            rj = resp.json()
-            musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
-            logger.debug(musicDownloadUrl)
-            command = ['curl', str( musicDownloadUrl ), '--output', os.path.join(savePath, fileName)]
-            output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
-            logger.debug(output.communicate())
-        
-        logger.debug("다운로드 종료" + trackTitle)
-        if type != "track":
-            import time
-            time.sleep(1)
+            if P.ModelSetting.to_dict()['ffmpegDownload'] == "True":
+                logger.debug("다운로드 시작 by ffmpeg" + trackId)
+                resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&play.mediaSourceType=AAC_320_ENC', data=LogicDownload.data, headers=LogicDownload.headers)
+                rj = resp.json()
+                musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
+                logger.debug( musicDownloadUrl )
+                command = ['ffmpeg', '-y', '-i', str( musicDownloadUrl ), '-acodec', 'mp3', '-ab', '320k', 
+                            '-metadata', 'title='+trackTitle, '-metadata', 'artist='+artist , '-metadata', 'album='+albumTitle, '-metadata', 'track='+trackNumber, 
+                            '-metadata', 'album_artist='+artist, os.path.join(savePath, fileName)]
+                            # '"'++'"']
+                
+                output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
+                # logger.debug(output.communicate())
+            else:
+                logger.debug("다운로드 시작 by curl" + trackId)
+                resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
+                rj = resp.json()
+                musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
+                logger.debug(musicDownloadUrl)
+                command = ['curl', str( musicDownloadUrl ), '--output', os.path.join(savePath, fileName)]
+                output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
+                # logger.debug(output.communicate())
+            
+            if type != "track":
+                import time
+                time.sleep(1)
         return True
 
 
@@ -503,38 +526,3 @@ class LogicDownload(LogicModuleBase):
         else:
             print("로그인 실패")
             return None
-            
-    # def register_item(req):
-    #     try:
-    #         naverId = req['naverId']
-    #         naverPw = req['naverPw']
-    #         savePath = req['savePath']
-
-    #         entity = ModelItem(naverId, naverPw, savePath)
-    #         entity.save()
-
-    #         return {'ret':'success', 'msg':'아이템 등록완료'}
-    #     except Exception as e:
-    #         logger.debug('Exception:%s', e)
-    #         logger.debug(traceback.format_exc())
-    #         return {'ret':'error', 'msg':str(e)}
-
-    # @staticmethod
-    # def modify_item(req):
-    #     try:
-    #         item_id = int(req['item_id'])
-
-    #         entity = ModelItem.get_by_id(item_id)
-    #         entity.sample_string = req['sample_string']
-    #         entity.sample_integer = int(req['sample_integer'])
-    #         entity.sample_boolean = True if req['sample_boolean'] == 'True' else False
-    #         entity.sample_imgurl = req['sample_imgurl']
-    #         entity.save()
-
-    #         return {'ret':'success', 'msg':'아이템 수정완료'}
-    #     except Exception as e:
-    #         logger.debug('Exception:%s', e)
-    #         logger.debug(traceback.format_exc())
-    #         return {'ret':'error', 'msg':str(e)}
-
-    

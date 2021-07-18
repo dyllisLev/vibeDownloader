@@ -40,7 +40,7 @@ class P(object):
         'name' : package_name,
         'category_name' : 'service',
         'icon' : '',
-        'developer' : u'orial',
+        'developer' : u'dyllis.lev',
         'description' : u'VIBE 다운로드 for SJVA',
         'home' : 'https://github.com/dyllisLev/%s' % package_name,
         'more' : '',

@@ -32,20 +32,14 @@ function downloadEventAdd(downloadType){
     e.preventDefault();
   
     $.ajax({
-      url: '/' + package_name + '/ajax/'+sub+'/musicDownloadById',
+      url: '/' + package_name + '/ajax/'+sub+'/allDownload',
       type: "POST", 
       cache: false,
-      data: {"trackId":"0", "albumId":$(this).data("albumid"), "type":downloadType},
+      data: {"albumId":$(this).data("albumid"), "type":downloadType},
       dataType: "json",
       success: function (data) {
         if( data.ret == "success" ){
-          if( downloadType == "TOP100" ){
-            $.notify('<strong>TOP100 다운로드 완료</strong>', {type: 'success'});
-          }else if( downloadType == "album" ){
-            $.notify('<strong>앨범 다운로드 완료</strong>', {type: 'success'});
-          }else{
-            $.notify('<strong>' + data.content.response.result.track.trackTitle + ' 다운로드 완료</strong>', {type: 'success'});
-          }
+          $.notify('<strong>다운로드를 시작합니다.</strong>', {type: 'success'});
         }else{
           $.notify('<strong>다운로드 실패</strong>', {type: 'danger'});
         }

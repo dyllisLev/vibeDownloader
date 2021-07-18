@@ -8,11 +8,12 @@
   <nav>
     {{ macros.m_tab_head_start() }}
       {{ macros.m_tab_head2('normal', '일반', true) }}
+      {{ macros.m_tab_head2('auto', '자동', false) }}
     {{ macros.m_tab_head_end() }}
   </nav>
+  <form id='setting' name='setting'>
   <div class="tab-content" id="nav-tabContent">
    {{ macros.m_tab_content_start('normal', true) }}
-   <form id='setting' name='setting'>
     {{ macros.setting_input_text('naverId', '네이버 아이디', value=arg['naverId'], desc=['네이버 아이디']) }}
     {{ macros.setting_input_text('naverPw', '네이버 암호', value=arg['naverPw'], desc=['네이버 암호'], type='password') }}
     <div class="row justify-content-center">
@@ -120,9 +121,14 @@
     {{ macros.setting_input_text('saveFileNameByTOP100', 'TOP100 저장 파일명', value=arg['saveFileNameByTOP100'], desc=['TOP100저장 파일명']) }}
     {{ macros.setting_input_text_and_buttons('savePathByAlbum', '앨범 기본저장 경로', [['btn_add_path', '경로추가']],value=arg['savePathByAlbum'], desc=['앨범 저장 경로']) }}
     {{ macros.setting_input_text('saveFileNameByAlbum', '앨범 저장 파일명', value=arg['saveFileNameByAlbum'], desc=['앨범 저장 파일명']) }}
-   </form>
    {{ macros.m_tab_content_end() }}
-</div> <!--전체-->
+   {{ macros.m_tab_content_start('auto', false) }}
+    {{ macros.setting_global_scheduler_sub_button(arg['scheduler'], arg['is_running']) }}
+    {{ macros.setting_input_text('setting_interval', '스케쥴링 실행 정보', value=arg['setting_interval'], col='3', desc=['Inverval(minute 단위)']) }}
+    {{ macros.setting_checkbox('auto_start', '시작시 자동실행', value=arg['auto_start'], desc='On : 시작시 자동으로 스케쥴러에 등록됩니다.') }}
+    {{ macros.m_tab_content_end() }}
+  </div> <!--전체-->
+</form>
 <div id="modalImport">
   
 </div>
@@ -149,6 +155,7 @@ $('#btn_add_path').click((evt) => {
 $("body").on('click', '#btn_register', function(e){
   e.preventDefault();
   var formData = get_formdata('#item_register_form');
+  
   $.ajax({
     url: '/' + package_name + '/ajax/'+sub+'/register_item',
     type: "POST",
