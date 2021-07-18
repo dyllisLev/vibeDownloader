@@ -485,7 +485,7 @@ class LogicDownload(LogicModuleBase):
                 logger.debug(musicDownloadUrl)
                 command = ['curl', str( musicDownloadUrl ), '--output', os.path.join(savePath, fileName)]
                 output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
-                # logger.debug(output.communicate())
+                output.communicate()
             
             LogicDownload.setLyrics(trackId, os.path.join(savePath, fileName))
             if type != "track":
