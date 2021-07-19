@@ -40,11 +40,14 @@ class LogicSetting(LogicModuleBase):
         'saveFileNameByTOP100'       : '%rank% - %trackTitle% - %artist%',
         'savePathByAlbum'       : os.path.join(path_data, package_name, "album","%albumTitle%"),
         'saveFileNameByAlbum'       : '%trackNumber% - %trackTitle% - %artist%',
+        'savePathByArtist'       : os.path.join(path_data, package_name, "artist","%artist%","%albumTitle%"),
+        'saveFileNameByArtist'       : '%trackNumber% - %trackTitle%',
         'ffmpegDownload' : False,
         'top100Download' : False,
         'newAlbumDownload1' : False,
         'newAlbumDownload2' : False,
         'albumId' : '',
+        'artistId' : '',
     }
 
     def __init__(self, P):

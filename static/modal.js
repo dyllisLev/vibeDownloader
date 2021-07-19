@@ -30,12 +30,11 @@ function downloadEventAdd(downloadType){
 
   $("body").on('click', '#btn_download_all', function(e){
     e.preventDefault();
-  
     $.ajax({
       url: '/' + package_name + '/ajax/'+sub+'/allDownload',
       type: "POST", 
       cache: false,
-      data: {"albumId":$(this).data("albumid"), "type":downloadType},
+      data: {"artistId":$(this).data("artistid"),"albumId":$(this).data("albumid"), "type":downloadType},
       dataType: "json",
       success: function (data) {
         if( data.ret == "success" ){
@@ -257,7 +256,6 @@ function artistModalView(id){
 }
 function getArtistModalHtml(data){
   
-  
   artist = data.artistInfo.response.result.artist;
   artistModalHtml = '';
   artistModalHtml += '<div class="modal fade" id="artistModal" tabindex="-1" role="dialog" aria-hidden="true">';
@@ -288,76 +286,94 @@ function getArtistModalHtml(data){
   
   
   
-  cnt = 0;
-  if( data.artistTrack.response.result.tracks == null){
+  if( data.artistTrack.response.result.trackTotalCount > 0 ){
+    viewSize = $('#artistModal .modal-body > div:last .row').length;
+    
     cnt = 0;
-  }else if( data.artistTrack.response.result.tracks.track[0] != undefined ){
-    cnt = Object.keys(data.artistTrack.response.result.tracks.track).length;
-  }else{
-    cnt = 1;
-  }
-  for( i = 0 ; i < cnt ; i++ ){
-    
-  // for( i = 0 ; i < data.artistTrack.response.result.trackTotalCount ; i++ ){
-    
-    track = data.artistTrack.response.result.tracks.track[i];
-    if( track == undefined ){
-      track = data.artistTrack.response.result.tracks.track;
+    if( data.artistTrack.response.result.tracks == null){
+      cnt = 0;
+    }else if( data.artistTrack.response.result.tracks.track[0] != undefined ){
+      cnt = Object.keys(data.artistTrack.response.result.tracks.track).length;
+    }else{
+      cnt = 1;
     }
-    artistModalHtml += '          <div class="row">';
-    artistModalHtml += '            <div class="col-md-3">';
-    artistModalHtml += '              '+track.trackTitle;
-    artistModalHtml += '            </div>';
-    artistModalHtml += '            <div class="col-md-3">';
-    
-    if( track.artists != undefined ){
-      if( track.artists.artist[0] == undefined ){
-        artistName = track.artists.artist.artistName;
-        artistId = track.artists.artist.artistId;
-        artistModalHtml += '                <a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView">'+artistName+'</a>';
-      }else{
-        for( var j in track.artists.artist){
-          if( j > 0 ){
-            artistModalHtml += ", ";
-          }
-          artistName = track.artists.artist[j].artistName;
-          artistId = track.artists.artist[j].artistId;
+    for( i = 0 ; i < cnt ; i++ ){
+      
+    // for( i = 0 ; i < data.artistTrack.response.result.trackTotalCount ; i++ ){
+      
+      track = data.artistTrack.response.result.tracks.track[i];
+      if( track == undefined ){
+        track = data.artistTrack.response.result.tracks.track;
+      }
+      artistModalHtml += '          <div class="row">';
+      artistModalHtml += '            <div class="col-md-3">';
+      artistModalHtml += '              '+track.trackTitle;
+      artistModalHtml += '            </div>';
+      artistModalHtml += '            <div class="col-md-3">';
+      
+      if( track.artists != undefined ){
+        if( track.artists.artist[0] == undefined ){
+          artistName = track.artists.artist.artistName;
+          artistId = track.artists.artist.artistId;
           artistModalHtml += '                <a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView">'+artistName+'</a>';
+        }else{
+          for( var j in track.artists.artist){
+            if( j > 0 ){
+              artistModalHtml += ", ";
+            }
+            artistName = track.artists.artist[j].artistName;
+            artistId = track.artists.artist[j].artistId;
+            artistModalHtml += '                <a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView">'+artistName+'</a>';
+          }
         }
       }
-    }
-    console.log("2");
-    albumTitle = '';
-    albumId = '';
-    
-    if( track.album != undefined ){
-      albumId = track.album.albumId;
-      albumTitle = track.album.albumTitle;
-    }else if( track.albumId != undefined ){
-      albumId = track.albumId;
-      albumTitle = track.albumTitle;
-    }
-    console.log("3");
-    artistModalHtml += '            </div>';
-    artistModalHtml += '            <div class="col-md-4">';
-    artistModalHtml += '              <a href="#" alt = "'+albumId+'" class="alert-link text-dark albumView">'+ albumTitle + '</a>';
-    artistModalHtml += '            </div>';
-    artistModalHtml += '            <div class="col-md-2 text-right pl-auto">';
-    artistModalHtml += '              <div class="btn-group btn-group-sm flex-wrap mr-2" role="group">';
-    artistModalHtml += '                <button id="btn_download" name="btn_download" class="btn btn-sm btn-outline-success" data-trackid="'+track.trackId+'">다운로드</button>';
-    artistModalHtml += '                <button id="btn_play" name="btn_play" class="btn btn-sm btn-outline-success" data-trackid="'+track.trackId+'">재생</button>';
-    artistModalHtml += '              </div>';
-    artistModalHtml += '            </div>';
-    artistModalHtml += '          </div>';
-    artistModalHtml += '          <hr style="width: 100%; margin:0px;" class="my-2 .bg-secondary">';
+      console.log("2");
+      albumTitle = '';
+      albumId = '';
+      
+      if( track.album != undefined ){
+        albumId = track.album.albumId;
+        albumTitle = track.album.albumTitle;
+      }else if( track.albumId != undefined ){
+        albumId = track.albumId;
+        albumTitle = track.albumTitle;
+      }
+      console.log("3");
+      artistModalHtml += '            </div>';
+      artistModalHtml += '            <div class="col-md-4">';
+      artistModalHtml += '              <a href="#" alt = "'+albumId+'" class="alert-link text-dark albumView">'+ albumTitle + '</a>';
+      artistModalHtml += '            </div>';
+      artistModalHtml += '            <div class="col-md-2 text-right pl-auto">';
+      artistModalHtml += '              <div class="btn-group btn-group-sm flex-wrap mr-2" role="group">';
+      artistModalHtml += '                <button id="btn_download" name="btn_download" class="btn btn-sm btn-outline-success" data-trackid="'+track.trackId+'">다운로드</button>';
+      artistModalHtml += '                <button id="btn_play" name="btn_play" class="btn btn-sm btn-outline-success" data-trackid="'+track.trackId+'">재생</button>';
+      artistModalHtml += '              </div>';
+      artistModalHtml += '            </div>';
+      artistModalHtml += '          </div>';
+      artistModalHtml += '          <hr style="width: 100%; margin:0px;" class="my-2 .bg-secondary">';
 
-
+      viewSize++;
+    }
+    // debugger
+    // if( data.artistTrack.response.result.trackTotalCount > viewSize){
+    //   artistModalHtml += '<div class="row">';
+    //   artistModalHtml += '  <div class="container pt-4">';
+    //   artistModalHtml += '   <div class="row justify-content-md-center">';
+    //   artistModalHtml += '     <div class="col-md-auto">';
+    //   artistModalHtml += '       <div class="btn-group btn-group-lg flex-wrap mr-2" role="group">';
+    //   artistModalHtml += '        <button id="btn_add_view_track" name="btn_add_view_track" class="btn btn-lg btn-outline-primary" data-row="'+viewSize+'">더보기</button>';
+    //   artistModalHtml += '       </div>';
+    //   artistModalHtml += '     </div>';
+    //   artistModalHtml += '   </div>';
+    //   artistModalHtml += '  </div>';
+    //   artistModalHtml += '</div>';
+    // }
   }
   
   artistModalHtml += '            </div>';
   artistModalHtml += '        </div>';
   artistModalHtml += '        <div class="modal-footer ">';
-  artistModalHtml += '          <button id="btn_download_all" name="btn_download_all" class="btn btn-sm btn-outline-success" data-artistid="">전체 다운로드</button>';
+  artistModalHtml += '          <button id="btn_download_all" name="btn_download_all" class="btn btn-sm btn-outline-success" data-artistid="'+artist.artistId+'">전체 다운로드</button>';
   artistModalHtml += '        </div>';
   artistModalHtml += '      </div>';
   artistModalHtml += '    </div>';

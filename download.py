@@ -290,7 +290,7 @@ class LogicDownload(LogicModuleBase):
     def allDownload(req):
         
         downloadType = req['type']
-        
+        logger.debug(req)
         logger.debug( downloadType )
         if downloadType == "TOP100":
             thread = threading.Thread(target=LogicDownload.musicDownloadTOP100, args=())
@@ -299,6 +299,11 @@ class LogicDownload(LogicModuleBase):
         elif downloadType == "album":
             P.ModelSetting.set("albumId", req['albumId'])
             thread = threading.Thread(target=LogicDownload.musicDownloadAlbum, args=())
+            thread.setDaemon(True)
+            thread.start()
+        elif downloadType == "artist":
+            P.ModelSetting.set("artistId", req['artistId'])
+            thread = threading.Thread(target=LogicDownload.musicDownloadArtist, args=())
             thread.setDaemon(True)
             thread.start()
         return {'ret':'success'}
@@ -347,6 +352,20 @@ class LogicDownload(LogicModuleBase):
         socketio.emit('notify', data, namespace='/framework', broadcast=True)
         
         logger.debug('LogicDownload musicDownloadAlbum process END!!!!')
+    
+    @staticmethod
+    def musicDownloadArtist():
+        logger.debug('LogicDownload musicDownloadArtist process started!!!!')
+        
+        info = LogicDownload.artistInfo(P.ModelSetting.to_dict())
+        for track in info['artistTrack']['response']['result']['tracks']['track']:
+            result = LogicDownload.musicDownload(track, "artist")
+        
+        from framework import socketio
+        data = {'type':'success', 'msg':'가수별 다운로드 완료.'}
+        socketio.emit('notify', data, namespace='/framework', broadcast=True)
+        
+        logger.debug('LogicDownload musicDownloadArtist process END!!!!')
 
     @staticmethod
     def musicDownload(track, type):
@@ -438,6 +457,26 @@ class LogicDownload(LogicModuleBase):
 
             fileName = saveFileNameByTOP100+".mp3"
             savePath = savePathByTOP100
+        
+        elif type == "artist":
+
+            savePathByArtist = P.ModelSetting.to_dict()['savePathByArtist']
+            saveFileNameByArtist = P.ModelSetting.to_dict()['saveFileNameByArtist']
+            
+            savePathByArtist = savePathByArtist.replace('%albumTitle%', albumTitle)
+            savePathByArtist = savePathByArtist.replace('%trackNumber%', trackNumber)
+            savePathByArtist = savePathByArtist.replace('%trackTitle%', trackTitle)
+            savePathByArtist = savePathByArtist.replace('%artist%', artist)
+            savePathByArtist = savePathByArtist.replace('%today%', today)
+            
+            saveFileNameByArtist = saveFileNameByArtist.replace('%albumTitle%', albumTitle)
+            saveFileNameByArtist = saveFileNameByArtist.replace('%trackNumber%', trackNumber)
+            saveFileNameByArtist = saveFileNameByArtist.replace('%trackTitle%', trackTitle)
+            saveFileNameByArtist = saveFileNameByArtist.replace('%artist%', artist)
+            saveFileNameByArtist = saveFileNameByArtist.replace('%today%', today)
+            
+            fileName = saveFileNameByArtist+".mp3"
+            savePath = savePathByArtist
             
 
         logger.debug('savePath : ' + savePath)
