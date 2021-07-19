@@ -136,13 +136,13 @@
     </div>
     
     {{ macros.setting_checkbox('ffmpegDownload', 'ffmpeg 사용여부', value=arg['ffmpegDownload'], desc='ffmpeg 사용여부') }}
-    {{ macros.setting_input_text_and_buttons('savePath', '기본저장 경로', [['btn_add_path', '경로추가']],value=arg['savePath'], desc=['저장 경로']) }}
+    {{ macros.setting_input_text_and_buttons('savePath', '기본저장 경로', [['btn_add_path1', '경로추가']],value=arg['savePath'], desc=['저장 경로']) }}
     {{ macros.setting_input_text('saveFileName', '기본저장 파일명', value=arg['saveFileName'], desc=['기본저장 파일명']) }}
-    {{ macros.setting_input_text_and_buttons('savePathByTOP100', 'TOP100 저장 경로', [['btn_add_path', '경로추가']],value=arg['savePathByTOP100'], desc=['TOP100 저장 경로']) }}
+    {{ macros.setting_input_text_and_buttons('savePathByTOP100', 'TOP100 저장 경로', [['btn_add_path2', '경로추가']],value=arg['savePathByTOP100'], desc=['TOP100 저장 경로']) }}
     {{ macros.setting_input_text('saveFileNameByTOP100', 'TOP100 저장 파일명', value=arg['saveFileNameByTOP100'], desc=['TOP100저장 파일명']) }}
-    {{ macros.setting_input_text_and_buttons('savePathByAlbum', '앨범 저장 경로', [['btn_add_path', '경로추가']],value=arg['savePathByAlbum'], desc=['앨범 저장 경로']) }}
+    {{ macros.setting_input_text_and_buttons('savePathByAlbum', '앨범 저장 경로', [['btn_add_path3', '경로추가']],value=arg['savePathByAlbum'], desc=['앨범 저장 경로']) }}
     {{ macros.setting_input_text('saveFileNameByAlbum', '앨범 저장 파일명', value=arg['saveFileNameByAlbum'], desc=['앨범 저장 파일명']) }}
-    {{ macros.setting_input_text_and_buttons('savePathByArtist', '가수별 저장 경로', [['btn_add_path', '경로추가']],value=arg['savePathByArtist'], desc=['가수별 저장 경로']) }}
+    {{ macros.setting_input_text_and_buttons('savePathByArtist', '가수별 저장 경로', [['btn_add_path4', '경로추가']],value=arg['savePathByArtist'], desc=['가수별 저장 경로']) }}
     {{ macros.setting_input_text('saveFileNameByArtist', '가수별 저장 파일명', value=arg['saveFileNameByArtist'], desc=['가수별 저장 경로']) }}
    {{ macros.m_tab_content_end() }}
    {{ macros.m_tab_content_start('auto', false) }}
@@ -172,10 +172,31 @@ $(document).ready(function(){
   $()
 });
 
-$('#btn_add_path').click((evt) => {
-    let add_path = '/';
+$('#btn_add_path1').click((evt) => {
+    let add_path = '/';    
     m_select_local_file_modal("경로 선택", '/', 'true', function(result){
       $('#savePath').val(result);
+    });
+    return false;
+});
+$('#btn_add_path2').click((evt) => {
+    let add_path = '/';    
+    m_select_local_file_modal("경로 선택", '/', 'true', function(result){
+      $('#savePathByTOP100').val(result);
+    });
+    return false;
+});
+$('#btn_add_path3').click((evt) => {
+    let add_path = '/';    
+    m_select_local_file_modal("경로 선택", '/', 'true', function(result){
+      $('#savePathByAlbum').val(result);
+    });
+    return false;
+});
+$('#btn_add_path4').click((evt) => {
+    let add_path = '/';    
+    m_select_local_file_modal("경로 선택", '/', 'true', function(result){
+      $('#savePathByArtist').val(result);
     });
     return false;
 });
