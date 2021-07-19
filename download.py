@@ -29,7 +29,25 @@ ModelSetting = P.ModelSetting
 
 class LogicDownload(LogicModuleBase):
     
-    headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Whale/2.7.100.20 Safari/537.36'}
+    headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Whale/2.7.100.20 Safari/537.36','sec-ch-ua': '"Chromium";v="86", "\"Not\\A;Brand";v="99", "Whale";v="2"'}
+    # headers = {':authority': 'apis.naver.com',
+    #            ':method': 'GET',
+    #            ':path': '/nmwebplayer/musicapiweb/device/VIBE_WEB/deviceId',
+    #            ':scheme': 'https',
+    # headers = {'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    #            'accept-encoding': 'gzip, deflate, br',
+    #            'accept-language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+    #            'cache-control': 'max-age=0',
+    #            'cookie': 'NNB=3QARWPW6A4PGA; NRTK=ag#all_gr#1_ma#-2_si#0_en#0_sp#0; ASID=dd8ac2c40000017811b4d63900000063; MM_NEW=1; NFS=2; MM_NOW_COACH=1; _ga_7VKFYR6RV1=GS1.1.1618118451.11.0.1618118451.60; NV_WETR_LOCATION_RGN_M="MDk3MTAxMDQ="; _fbp=fb.1.1623667116383.1120077572; NV_WETR_LAST_ACCESS_RGN_M="MDk3MTAxMDQ="; _gid=GA1.2.1062218854.1626619459; NDARK=N; nid_inf=508779156; NID_AUT=878rvxC5BR5vtLg+4Gg03qaRXMpSB+rFe13yKKJiN/tWgo2KF9ouzXT5gPxOyR74; NID_JKL=1KsBi0zoMJ9egg6GVh3MnQGiVt+Lt2RHhy7/GoIYNgM=; X-Tx-Id=144d731e-750a-4d9b-966d-4f856a7f3e49; _ga=GA1.2.51896110.1626336485; NID_SES=AAABrlk04ldWViyN1pI/HclReYXsiNfa3pQm8JX6zCZLw5otoSj3fRGAkA1wVecvCSHFuQdVQUpIGEugtwZmr/7OKmMMvyPaP7q1YbZEgKq9UjCJxtFBtdpvZPDRdCmcf4SoW3eSu/JAcH7X0b9D+wHq0Cp54ksTF4wGK+oEHcDQ4aGC4IrQq74sLqLMvA0YTh68Hn91w7kTXiU7/ryPwhVBuwC+KQ6J/uVuedmCYVxhCtvldBgy2TsAyfVgD4YJItRz1gZofJc+hW4umT8R+oYzEHjWuvdMMhTxmTijiWHucM2d3psvXwHeB0lMaJSZ2jGN1vgD9rkFifMUIaaOg4oqSbeMgfAeBJJGf6RScZMFVP4r0d/IFSoaGy++v1chXXTwe/ov2JuxoyJj9kCB1BeJhCgiX3ENqYcLhKIArzRCHmlgIOzGofN6unMzWhFxDf3SJOj2K5MZBEJY4bSANdTLyGh7wklB3IcxCMUOZVxmhhecLJqHE8xDJcvKwt5jFOlxQxuT5bKQuWc/+zf6dQ79b55F7NpgK343mVSV/4wVz5n9Zvse/vB0ad4z+pW8Zsn0Xg==; JSESSIONID=AF0438B58F03428DB9031B6A35A467C4; _ga_4BKHBFKFK0=GS1.1.1626656647.38.1.1626656762.12',
+    #            'sec-ch-ua': '"Chromium";v="86", "\"Not\\A;Brand";v="99", "Whale";v="2"',
+    #            'sec-ch-ua-mobile': '?0',
+    #            'sec-fetch-dest': 'document',
+    #            'sec-fetch-mode': 'navigate',
+    #            'sec-fetch-site': 'none',
+    #            'sec-fetch-user': '?1',
+    #            'upgrade-insecure-requests': '1',
+    #            'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Whale/2.7.100.20 Safari/537.36','sec-ch-ua': '"Chromium";v="86", "\"Not\\A;Brand";v="99", "Whale";v="2"'}
+    # deviceId = LogicDownload.getDeviceId()
     data = None
     session = None
     
@@ -500,36 +518,51 @@ class LogicDownload(LogicModuleBase):
         logger.debug( os.path.join(savePath, fileName) )
         logger.debug( os.path.isfile( os.path.join(savePath, fileName) ) )
         
-        if os.path.isfile( os.path.join(savePath, fileName) ) :
-            logger.debug("이미 같은파일이 있음")
-        else:
-            if P.ModelSetting.to_dict()['ffmpegDownload'] == "True":
-                logger.debug("다운로드 시작 by ffmpeg" + trackId)
-                resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&play.mediaSourceType=AAC_320_ENC', data=LogicDownload.data, headers=LogicDownload.headers)
-                rj = resp.json()
-                musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
-                logger.debug( musicDownloadUrl )
-                command = ['ffmpeg', '-y', '-i', str( musicDownloadUrl ), '-acodec', 'mp3', '-ab', '320k', 
-                            '-metadata', 'title='+trackTitle, '-metadata', 'artist='+artist , '-metadata', 'album='+albumTitle, '-metadata', 'track='+trackNumber, 
-                            '-metadata', 'album_artist='+artist, os.path.join(savePath, fileName)]
-                            # '"'++'"']
+        try:
+            if os.path.isfile( os.path.join(savePath, fileName) ) :
                 
-                output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
-                output.communicate()
+                logger.debug(os.path.join(savePath, fileName))
+                logger.debug(os.path.join(savePath, fileName))
+                logger.debug("이미 같은파일이 있음")
             else:
-                logger.debug("다운로드 시작 by curl" + trackId)
-                resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
-                rj = resp.json()
-                musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
-                logger.debug(musicDownloadUrl)
-                command = ['curl', str( musicDownloadUrl ), '--output', os.path.join(savePath, fileName)]
-                output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
-                output.communicate()
-            
-            LogicDownload.setLyrics(trackId, os.path.join(savePath, fileName))
-            if type != "track":
-                import time
-                time.sleep(1)
+                
+                # rj = resp.json()
+                if P.ModelSetting.to_dict()['ffmpegDownload'] == "True":
+                    logger.debug("다운로드 시작 by ffmpeg" + trackId)
+                    
+                    resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&play.mediaSourceType=AAC_320_ENC&deviceId=VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
+                    # resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=df8afa3c-4b6f-43s4-9e2d-b0fb7b0f5657-20210719-VIBE_WEB&play.mediaSourceType=AAC_320_ENC', data=LogicDownload.data, headers=LogicDownload.headers)
+                    rj = resp.json()
+                    musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
+                    logger.debug( musicDownloadUrl )
+                    command = ['ffmpeg', '-y', '-i', str( musicDownloadUrl ), '-acodec', 'mp3', '-ab', '320k', 
+                                '-metadata', 'title='+trackTitle, '-metadata', 'artist='+artist , '-metadata', 'album='+albumTitle, '-metadata', 'track='+trackNumber, 
+                                '-metadata', 'album_artist='+artist, os.path.join(savePath, fileName)]
+                                # '"'++'"']
+                    
+                    output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
+                    output.communicate()
+                else:
+                    logger.debug("다운로드 시작 by curl" + trackId)
+                    resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
+                    # resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=df8afa3c-4b6f-43s4-9e2d-b0fb7b0f5657-20210719-VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
+                    rj = resp.json()
+                    logger.debug(rj)
+                    musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
+                    logger.debug(musicDownloadUrl)
+                    command = ['curl', str( musicDownloadUrl ), '--output', os.path.join(savePath, fileName)]
+                    output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
+                    output.communicate()
+                
+                LogicDownload.setLyrics(trackId, os.path.join(savePath, fileName))
+                if type != "track":
+                    import time
+                    time.sleep(1)
+        except Exception as e: 
+            logger.error("다운로드 오류 trackId : " + trackId)
+            logger.error("다운로드 오류 type: " + type)
+            logger.error("다운로드 오류 resp.text: " + resp.text)
+            logger.error(traceback.format_exc())
         return True
 
     @staticmethod
