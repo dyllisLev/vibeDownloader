@@ -143,7 +143,7 @@ class LogicDownload(LogicModuleBase):
             if LogicDownload.session is None :
                 return False
 
-        resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&play.mediaSourceType=AAC_320_ENC', data=LogicDownload.data, headers=LogicDownload.headers)
+        resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&&deviceId=VIBE_WEB&play.mediaSourceType=AAC_320_ENC', data=LogicDownload.data, headers=LogicDownload.headers)
         rj = resp.json()
         musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
 
@@ -547,7 +547,7 @@ class LogicDownload(LogicModuleBase):
                     resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
                     # resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=df8afa3c-4b6f-43s4-9e2d-b0fb7b0f5657-20210719-VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
                     rj = resp.json()
-                    logger.debug(rj)
+                    # logger.debug(rj)
                     musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
                     logger.debug(musicDownloadUrl)
                     command = ['curl', str( musicDownloadUrl ), '--output', os.path.join(savePath, fileName)]
