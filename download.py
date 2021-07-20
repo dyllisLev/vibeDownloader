@@ -467,6 +467,7 @@ class LogicDownload(LogicModuleBase):
         
         albumTitle  = track['album']['albumTitle'].replace('/', '')
         trackNumber = track['trackNumber']
+        trackNumber = str(trackNumber).rjust(2,"0")
         trackTitle  = track['trackTitle'].replace('/', '')
         artist      = ''
 
