@@ -30,11 +30,13 @@ function downloadEventAdd(downloadType){
 
   $("body").on('click', '#btn_download_all', function(e){
     e.preventDefault();
+    key = $(this).data("top100key");
+    
     $.ajax({
       url: '/' + package_name + '/ajax/'+sub+'/allDownload',
       type: "POST", 
       cache: false,
-      data: {"artistId":$(this).data("artistid"),"albumId":$(this).data("albumid"), "type":downloadType},
+      data: {"artistId":$(this).data("artistid"),"albumId":$(this).data("albumid"), "type":downloadType, "top100Key":key},
       dataType: "json",
       success: function (data) {
         if( data.ret == "success" ){

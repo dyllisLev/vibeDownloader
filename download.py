@@ -76,7 +76,7 @@ class LogicDownload(LogicModuleBase):
             ret = {'ret':'success', 'data':[]}
             logger.debug('AJAX %s', sub)
             if sub == 'top100':
-                ret = LogicDownload.top100List()
+                ret = LogicDownload.top100List(req.form)
             elif sub == 'musicDownloadById':
                 ret = LogicDownload.musicDownloadById(req.form)
             elif sub == 'new':
@@ -196,8 +196,34 @@ class LogicDownload(LogicModuleBase):
             artistInfo = json.dumps(dictionary) 
         return {'ret':'success', 'trackInfo':json.loads(trackInfo)['response']['result'], 'albumInfo':json.loads(albumInfo)['response']['result'], 'artistInfo':json.loads(artistInfo)['response']['result']}
     @staticmethod
-    def top100List():
-        resp = requests.get('https://apis.naver.com/vibeWeb/musicapiweb/vibe/v1/chart/track/total')
+    def top100List(req):
+
+        key = req['top100Key']
+        logger.debug("key : " + key)
+        
+        url = ''
+
+        if key == '1':
+            url = 'https://apis.naver.com/vibeWeb/musicapiweb/vibe/v1/chart/track/total'
+        elif key == '2':
+            url = 'https://apis.naver.com/vibeWeb/musicapiweb/vibe/v1/chart/track/domestic'
+        elif key == '3':
+            url = 'https://apis.naver.com/vibeWeb/musicapiweb/vibe/v1/chart/billboard/kpop'
+        elif key == '4':
+            url = 'https://apis.naver.com/vibeWeb/musicapiweb/vibe/v1/chart/track/oversea'
+        elif key == '5':
+            url = 'https://apis.naver.com/vibeWeb/musicapiweb/chart/billboard/track'
+        elif key == '6':
+            url = 'https://apis.naver.com/vibeWeb/musicapiweb/chart/karaoke'
+        elif key == '7':
+            url = 'https://apis.naver.com/vibeWeb/musicapiweb/vibe/v1/chart/track/genres/DS102'
+        elif key == '8':
+            url = 'https://apis.naver.com/vibeWeb/musicapiweb/vibe/v1/chart/track/genres/DS103'
+        elif key == '9':
+            url = 'https://apis.naver.com/vibeWeb/musicapiweb/vibe/v1/chart/track/search'
+
+
+        resp = requests.get(url)
     
         if resp.status_code == 200 :
             dictionary = xmltodict.parse(resp.text)
@@ -270,7 +296,9 @@ class LogicDownload(LogicModuleBase):
         trackInfo = None
         result = False
         if downloadType == "TOP100":
-            info = LogicDownload.top100List()
+
+            P.ModelSetting.set("top100Key", req['top100Key'])
+            info = LogicDownload.top100List(req)
 
             
             for track in info['content']['response']['result']['chart']['items']['tracks']['track']:
@@ -308,9 +336,10 @@ class LogicDownload(LogicModuleBase):
     def allDownload(req):
         
         downloadType = req['type']
-        logger.debug(req)
-        logger.debug( downloadType )
+        
         if downloadType == "TOP100":
+            logger.debug(req)
+            P.ModelSetting.set("top100Key", req['top100Key'])
             thread = threading.Thread(target=LogicDownload.musicDownloadTOP100, args=())
             thread.setDaemon(True)
             thread.start()
@@ -331,7 +360,32 @@ class LogicDownload(LogicModuleBase):
         try:
             # 여기다 로직 구현
             logger.debug('LogicDownload main process started!!!!')
-            if P.ModelSetting.get("top100Download") == "True":
+            if P.ModelSetting.get("top100Download1") == "True":
+                P.ModelSetting.set("top100Key", "1")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download2") == "True":
+                P.ModelSetting.set("top100Key", "2")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download3") == "True":
+                P.ModelSetting.set("top100Key", "3")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download4") == "True":
+                P.ModelSetting.set("top100Key", "4")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download5") == "True":
+                P.ModelSetting.set("top100Key", "5")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download6") == "True":
+                P.ModelSetting.set("top100Key", "6")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download7") == "True":
+                P.ModelSetting.set("top100Key", "7")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download8") == "True":
+                P.ModelSetting.set("top100Key", "8")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download9") == "True":
+                P.ModelSetting.set("top100Key", "9")
                 LogicDownload.musicDownloadTOP100()
             if P.ModelSetting.get("newAlbumDownload1") == "True":
                 logger.debug('신규 국내')
@@ -347,9 +401,13 @@ class LogicDownload(LogicModuleBase):
     @staticmethod
     def musicDownloadTOP100():
         logger.debug('LogicDownload musicDownloadTOP100 process started!!!!')
-        info = LogicDownload.top100List()
+
+        logger.debug(P.ModelSetting.to_dict())
+        info = LogicDownload.top100List(P.ModelSetting.to_dict())
+        cnt = 1
         for track in info['content']['response']['result']['chart']['items']['tracks']['track']:
-            result = LogicDownload.musicDownload(track, "TOP100")
+            result = LogicDownload.musicDownload(track, "TOP100", topRank=cnt)
+            cnt = cnt + 1
 
         from framework import socketio
         data = {'type':'success', 'msg':'TOP100 다운로드 완료.'}
@@ -385,8 +443,24 @@ class LogicDownload(LogicModuleBase):
         
         logger.debug('LogicDownload musicDownloadArtist process END!!!!')
 
+    
+
+#/////////////////////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////////////////////////////////////////////////////
     @staticmethod
-    def musicDownload(track, type):
+    def musicDownload(track, type, topRank=None):
+
+        info = LogicDownload.getDownloadFilePath(track, type, topRank)
+        logger.debug(info)
+        LogicDownload.download(info)
+        
+        return True
+
+    @staticmethod
+    def getDownloadFilePath(track, type, topRank=None):
 
         trackId = track['trackId']
         trackTitle = track['trackTitle']
@@ -453,9 +527,33 @@ class LogicDownload(LogicModuleBase):
         
         elif type == "TOP100":
 
-            rank = track['rank']['currentRank']
-            rank = rank.rjust(3,"0")
+            if "rank" in track.keys() :
+                rank = track['rank']['currentRank']
+            else:
+                rank = topRank
+            
+            rank = str(rank).rjust(3,"0")
 
+            key = P.ModelSetting.to_dict()['top100Key']
+            if key == '1':
+                toptitle = '오늘 TOP100'
+            elif key == '2':
+                toptitle = '국내 급상승'
+            elif key == '3':
+                toptitle = '빌보드 K-POP'
+            elif key == '4':
+                toptitle = '해외 급상승'
+            elif key == '5':
+                toptitle = '빌보드 HOT100'
+            elif key == '6':
+                toptitle = 'VIBE 노래방 TOP100'
+            elif key == '7':
+                toptitle = '국내 발라드 TOP100'
+            elif key == '8':
+                toptitle = '국내 댄스 TOP100'
+            elif key == '9':
+                toptitle = '음악검색 TOP100'
+            
             savePathByTOP100 = P.ModelSetting.to_dict()['savePathByTOP100']
             saveFileNameByTOP100 = P.ModelSetting.to_dict()['saveFileNameByTOP100']
             
@@ -465,6 +563,7 @@ class LogicDownload(LogicModuleBase):
             savePathByTOP100 = savePathByTOP100.replace('%artist%', artist)
             savePathByTOP100 = savePathByTOP100.replace('%today%', today)
             savePathByTOP100 = savePathByTOP100.replace('%rank%', rank)
+            savePathByTOP100 = savePathByTOP100.replace('%toptitle%', toptitle)
             
             saveFileNameByTOP100 = saveFileNameByTOP100.replace('%albumTitle%', albumTitle)
             saveFileNameByTOP100 = saveFileNameByTOP100.replace('%trackNumber%', trackNumber)
@@ -472,6 +571,8 @@ class LogicDownload(LogicModuleBase):
             saveFileNameByTOP100 = saveFileNameByTOP100.replace('%artist%', artist)
             saveFileNameByTOP100 = saveFileNameByTOP100.replace('%today%', today)
             saveFileNameByTOP100 = saveFileNameByTOP100.replace('%rank%', rank)
+            saveFileNameByTOP100 = saveFileNameByTOP100.replace('%toptitle%', toptitle)
+
 
             fileName = saveFileNameByTOP100+".mp3"
             savePath = savePathByTOP100
@@ -495,38 +596,44 @@ class LogicDownload(LogicModuleBase):
             
             fileName = saveFileNameByArtist+".mp3"
             savePath = savePathByArtist
-            
+        
+        filename = re.sub('[\\\:*?"<>|]','',fileName)
+        savePath = re.sub('[\\\:*?"<>|]','',savePath)
+        return {'trackId':trackId, 'path': os.path.join(savePath, fileName), 'albumTitle': albumTitle, 'trackNumber': trackNumber, 'trackTitle': trackTitle, 'artist': artist}
 
-        logger.debug('savePath : ' + savePath)
-        logger.debug('fileName : ' + fileName)
+    @staticmethod
+    def download(info):
 
-        naverId = P.ModelSetting.to_dict()['naverId']
-        naverPw = P.ModelSetting.to_dict()['naverPw']
-
-        if LogicDownload.session is None :
-            LogicDownload.session = LogicDownload.naver_login(naverId, naverPw)
-            if LogicDownload.session is None :
-                return False
-                
-
-                
-        if not os.path.isdir(savePath):
-            os.makedirs(savePath)
+        trackId = info['trackId']
+        path = info['path']
+        albumTitle = info['albumTitle']
+        trackNumber = info['trackNumber']
+        trackTitle = info['trackTitle']
+        artist = info['artist']
 
         logger.debug("다운로드 시작" + trackId)
         logger.debug(P.ModelSetting.to_dict()['ffmpegDownload'])
-        logger.debug( os.path.join(savePath, fileName) )
-        logger.debug( os.path.isfile( os.path.join(savePath, fileName) ) )
+        logger.debug( path )
+        logger.debug( os.path.isfile( path ) )
+
+        if LogicDownload.session is None :
+
+            naverId = P.ModelSetting.to_dict()['naverId']
+            naverPw = P.ModelSetting.to_dict()['naverPw']
+            LogicDownload.session = LogicDownload.naver_login(naverId, naverPw)
+            if LogicDownload.session is None :
+                return False
         
         try:
-            if os.path.isfile( os.path.join(savePath, fileName) ) :
-                
-                logger.debug(os.path.join(savePath, fileName))
-                logger.debug(os.path.join(savePath, fileName))
+
+            if os.path.isfile( path ) :
+                logger.debug(path)
                 logger.debug("이미 같은파일이 있음")
             else:
                 
-                # rj = resp.json()
+                if not os.path.isdir(os.path.split(path)[0]):
+                    os.makedirs(os.path.split(path)[0])
+                
                 if P.ModelSetting.to_dict()['ffmpegDownload'] == "True":
                     logger.debug("다운로드 시작 by ffmpeg" + trackId)
                     
@@ -537,7 +644,7 @@ class LogicDownload(LogicModuleBase):
                     logger.debug( musicDownloadUrl )
                     command = ['ffmpeg', '-y', '-i', str( musicDownloadUrl ), '-acodec', 'mp3', '-ab', '320k', 
                                 '-metadata', 'title='+trackTitle, '-metadata', 'artist='+artist , '-metadata', 'album='+albumTitle, '-metadata', 'track='+trackNumber, 
-                                '-metadata', 'album_artist='+artist, os.path.join(savePath, fileName)]
+                                '-metadata', 'album_artist='+artist, os.path.join(path)]
                                 # '"'++'"']
                     
                     output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
@@ -550,11 +657,11 @@ class LogicDownload(LogicModuleBase):
                     # logger.debug(rj)
                     musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
                     logger.debug(musicDownloadUrl)
-                    command = ['curl', str( musicDownloadUrl ), '--output', os.path.join(savePath, fileName)]
+                    command = ['curl', str( musicDownloadUrl ), '--output', os.path.join(path)]
                     output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
                     output.communicate()
                 
-                LogicDownload.setLyrics(trackId, os.path.join(savePath, fileName))
+                LogicDownload.setLyrics(trackId, os.path.join(path))
                 if type != "track":
                     import time
                     time.sleep(1)
@@ -563,7 +670,6 @@ class LogicDownload(LogicModuleBase):
             logger.error("다운로드 오류 type: " + type)
             logger.error("다운로드 오류 resp.text: " + resp.text)
             logger.error(traceback.format_exc())
-        return True
 
     @staticmethod
     def setLyrics(trackId, filePath):
@@ -623,8 +729,9 @@ class LogicDownload(LogicModuleBase):
         from lxml.html import fromstring
         doc  = fromstring(resp.text)
         if(resp.text.find("location.replace")>-1):
-            print("로그인 성공")
+            logger.debug("로그인 성공")
             return session
         else:
-            print("로그인 실패")
+            logger.debug("로그인 실패")
+            logger.debug(doc)
             return None

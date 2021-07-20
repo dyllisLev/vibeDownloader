@@ -128,6 +128,14 @@
               랭크[ TOP100 한정 ]
             </div>
           </div>
+          <div class="row">
+            <div class="col-3">
+              %toptitle%
+            </div>
+            <div class="col-9">
+              TOP타이틀[오늘, 국내 급상승, 빌보다 K-POP 등]
+            </div>
+          </div>
           <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -148,7 +156,40 @@
    {{ macros.m_tab_content_start('auto', false) }}
     {{ macros.setting_global_scheduler_sub_button(arg['scheduler'], arg['is_running']) }}
     {{ macros.setting_input_text('setting_interval', '스케쥴링 실행 정보', value=arg['setting_interval'], col='3', desc=['Inverval(minute 단위) 이나 Cron 설정']) }}
-    {{ macros.setting_checkbox('top100Download', 'TOP100 다운로드', value=arg['top100Download'], desc='TOP100 다운로드') }}
+    <div class="row" style="padding-top: 10px; padding-bottom:10px; align-items: center;">
+      <div class="container">
+        <div class="row justify-content-md-center">
+          <div class="col col-lg-8">
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+              <strong>스케쥴링</strong></br>
+              <hr style="width: 100%; margin:0px; background-color:#808080;" class="my-2">
+              <div class="row">
+                <div class="col">
+                  스케쥴링 작동시<br>
+                  On 체크한 항목만 다운로드실행을 하게됩니다.<br>
+                  <strong>스케쥴일은 1일 1회를 권장합니다.</strong><br>
+                  각 차트별로 업데이트 시간이 상이합니다.
+                  스케쥴에 넣으시려는 차트의 업데이트 시간대를 잘 참고 하셔서 설정하세요.
+                </div>
+              </div>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    {{ macros.setting_checkbox('top100Download1', '오늘 Top100', value=arg['top100Download1'], desc='차트 - 오늘 Top100') }}
+    {{ macros.setting_checkbox('top100Download2', '국내 급상승', value=arg['top100Download2'], desc='차트 - 국내 급상승') }}
+    {{ macros.setting_checkbox('top100Download3', '빌보드 K-POP100', value=arg['top100Download3'], desc='차트 - 빌보드 K-POP100') }}
+    {{ macros.setting_checkbox('top100Download4', '해외 급상승', value=arg['top100Download4'], desc='차트 - 해외 급상승') }}
+    {{ macros.setting_checkbox('top100Download5', '빌보드 HOT100', value=arg['top100Download5'], desc='차트 - 빌보드 HOT100') }}
+    {{ macros.setting_checkbox('top100Download6', 'VIBE노래방 Top100', value=arg['top100Download6'], desc='차트 - VIBE노래방 Top100') }}
+    {{ macros.setting_checkbox('top100Download7', '국내 발라드 Top100', value=arg['top100Download7'], desc='차트 - 국내 발라드 Top100') }}
+    {{ macros.setting_checkbox('top100Download8', '국내 댄스 Top100', value=arg['top100Download8'], desc='차트 - 국내 댄스 Top100') }}
+    {{ macros.setting_checkbox('top100Download9', '음악검색 Top100', value=arg['top100Download9'], desc='차트 - 음악검색 Top100') }}
     <!--
     {{ macros.setting_checkbox('newAlbumDownload1', '최신앨범[국내] 다운로드', value=arg['newAlbumDownload1'], desc='최신앨범[국내] 다운로드') }}
     {{ macros.setting_checkbox('newAlbumDownload2', '최신앨범[해외] 다운로드', value=arg['newAlbumDownload2'], desc='최신앨범[해외] 다운로드') }}

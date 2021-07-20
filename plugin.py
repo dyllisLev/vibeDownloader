@@ -30,7 +30,7 @@ class P(object):
         'category' : 'service',
         'sub2' : {
             'download': [
-                ['TOP100',u'TOP100'],['NEW', u'최신앨범'], ['search', u'검색']
+                ['TOP100',u'차트'],['NEW', u'최신앨범'], ['search', u'검색']
             ],
         },
     }

@@ -36,18 +36,28 @@ class LogicSetting(LogicModuleBase):
         'naverPw'    : u'pass',
         'savePath'       : os.path.join(path_data, package_name),
         'saveFileName'   : '%albumTitle% - %trackNumber% - %trackTitle% - %artist%',
-        'savePathByTOP100'       : os.path.join(path_data, package_name, "TOP100", "%today%"),
+        'savePathByTOP100'       : os.path.join(path_data, package_name, "TOP100", "%toptitle%","%today%"),
         'saveFileNameByTOP100'       : '%rank% - %trackTitle% - %artist%',
         'savePathByAlbum'       : os.path.join(path_data, package_name, "album","%albumTitle%"),
         'saveFileNameByAlbum'       : '%trackNumber% - %trackTitle% - %artist%',
         'savePathByArtist'       : os.path.join(path_data, package_name, "artist","%artist%","%albumTitle%"),
         'saveFileNameByArtist'       : '%trackNumber% - %trackTitle%',
         'ffmpegDownload' : False,
-        'top100Download' : False,
         'newAlbumDownload1' : False,
         'newAlbumDownload2' : False,
         'albumId' : '',
         'artistId' : '',
+        'top100Key' : '',
+        'top100Download1' : False,
+        'top100Download2' : False,
+        'top100Download3' : False,
+        'top100Download4' : False,
+        'top100Download5' : False,
+        'top100Download6' : False,
+        'top100Download7' : False,
+        'top100Download8' : False,
+        'top100Download9' : False
+
     }
 
     def __init__(self, P):
@@ -119,6 +129,7 @@ class LogicSetting(LogicModuleBase):
         try:
             # db 마이그레이션: 필요한 경우에 작성 
             # ex) 배포 후 버전업에 따라 DB에 필드의 추가가 필요하거나 할떄 사용 설정의 db_version을 업데이트 하며 사용
+            
             pass
         except Exception as e:
             logger.debug('Exception:%s', e)

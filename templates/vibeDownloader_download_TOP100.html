@@ -5,7 +5,53 @@
     width: 40px;
     height: 40px;
   }
+  .container {
+    max-width: 1024px;
+  }
 </style>
+<div>
+  <div class="card text-center">
+    <div class="card-header">
+      <ul class="nav nav-pills card-header-pills">
+        <li class="nav-item">
+          <a class="nav-link active" href="#" data-top100Key="1">오늘</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#"  data-top100Key="2">국내 급상승</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#"  data-top100Key="3">빌보드 K-POP</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#"  data-top100Key="4">해외 급상승</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#"  data-top100Key="5">빌보드 HOT</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#"  data-top100Key="6">VIBE노래방</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#"  data-top100Key="7">국내 발라드</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#"  data-top100Key="8">국내 댄스</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#"  data-top100Key="9">음악검색</a>
+        </li>
+      </ul>
+    </div>
+      <div id="list" class="card-body">
+        <div id="list_title"></div>
+        {{ macros.m_hr_head_top() }}
+        {{ macros.m_row_start('0') }}
+        {{ macros.m_row_end() }}
+        <div id="list_div"></div>
+      </div>
+    </div>
+  </div>
+</div>
 <div>
   <div class="audioPlay" hidden>
     <video id="video"></video>
@@ -14,12 +60,6 @@
     <div class="modalinnerbyAlbum"></div>
     <div class="modalinnerbyArtist"></div>  
   </div>
-  <div id="list_title"></div>
-  {{ macros.m_hr_head_top() }}
-  {{ macros.m_row_start('0') }}
-  {{ macros.m_row_end() }}
-  <div id="list_div"></div>
-  <div id='page2'></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -32,35 +72,26 @@ var current_page = 1;
 var formData = null;
 
 $(document).ready(function(){
-
-  request_search();
+  $('.card-header-pills .nav-link').first().click();
+  
   
 });
 
-$("body").on('click', '#page', function(e){
+$("body").on('click', '.card-header-pills .nav-link', function(e){
   e.preventDefault();
-  var page = $(this).data('page')
-  request_search(page, true);
+  $('.card-header-pills .nav-link').removeClass("active");
+  $(this).addClass("active");
+  request_search($(this));
+  
 });
 
-$("#search").click(function(e) {
-  e.preventDefault();
-  request_search('1', true);
-});
-
-$("#reset_btn").click(function(e) {
-  e.preventDefault();
-  document.getElementById("search_word").value = '';
-  request_search(current_page, true);
-});
-
-function request_search() {
+function request_search(obj) {
   
   $.ajax({
     url: '/' + package_name + '/ajax/'+sub+'/top100',
     type: "POST", 
     cache: false,
-    data: null,
+    data: {'top100Key':$(obj).data("top100key")},
     dataType: "json",
     success: function (data) {
       if (scroll == true) {
@@ -79,26 +110,31 @@ function make_list(chart) {
 
   
   str = "";
-  
   for( i = 0 ; i < chart.items.trackTotalCount ; i++ ){
     track = chart.items.tracks.track[i];
     
     str += m_row_start();
     // tmp = '<center><input type="checkbox" id="chk_track_49356016" class="input_check"></center>';
     // str += m_col(1, tmp)
-    tmp = track.rank.currentRank;
-
-    if( track.rank.rankVariation != 0 ){
-      arrow = "";
-      color = "";
-      if ( track.rank.rankVariation > 0 ){
-        arrow = "▲";
-        color = "red";
-      }else if ( track.rank.rankVariation < 0 ){
-        arrow = "▼";
-        color = "blue";
+    if( track.rank != undefined && track.rank.currentRank != undefined ){
+      
+      tmp = track.rank.currentRank;
+  
+      if( track.rank.rankVariation != 0 ){
+        arrow = "";
+        color = "";
+        if ( track.rank.rankVariation > 0 ){
+          arrow = "▲";
+          color = "red";
+        }else if ( track.rank.rankVariation < 0 ){
+          arrow = "▼";
+          color = "blue";
+        }
+        tmp += ' <span style="color: '+color+'; font-weight: bold;"> '+Math.abs(track.rank.rankVariation)+ arrow + '</span>';
       }
-      tmp += ' <span style="color: '+color+'; font-weight: bold;"> '+Math.abs(track.rank.rankVariation)+ arrow + '</span>';
+
+    }else{
+      tmp = i+1;
     }
     
     str += m_col(1, tmp);
@@ -137,14 +173,13 @@ function make_list(chart) {
   }
   
   document.getElementById("list_div").innerHTML = str;
-
-  btn_str = m_button('btn_download_all', '전체다운로드', [{'key':'trackid', 'value':''}]);
+  btn_str = m_button('btn_download_all', '전체다운로드', [{'key':'top100Key', 'value':$('.card-header-pills .nav-link.active').data("top100key")}]);
   tmp = m_button_group(btn_str);
 
   title = m_row_start();
   title = '<div class="container">';
   title += '  <div class="row justify-content-between">';
-  title += '    <div class="col-8">';
+  title += '    <div class="col-8 text-left">';
   title += '      '+chart.chartDate + '<br>' + chart.description;
   title += '    </div>';
   title += '    <div class="col-4 text-right">';
