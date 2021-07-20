@@ -25,7 +25,7 @@ class P(object):
     menu = {
         'main' : [package_name, u'VIBE 다운로드'],
         'sub' : [
-            ['setting', u'설정'],['download', u'다운로드'], ['log', u'로그']
+            ['setting', u'설정'],['download', u'다운로드'],['manage', u'관리'], ['log', u'로그']
         ],
         'category' : 'service',
         'sub2' : {
@@ -74,8 +74,9 @@ def initialize():
         # 로드할 모듈 정의
         from .setting import LogicSetting
         from .download import LogicDownload
+        from .manage import LogicManage
         
-        P.module_list = [LogicSetting(P), LogicDownload(P)]
+        P.module_list = [LogicSetting(P), LogicDownload(P), LogicManage(P)]
 
         P.logic = Logic(P)
         default_route(P)
