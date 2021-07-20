@@ -25,15 +25,12 @@ class P(object):
     menu = {
         'main' : [package_name, u'VIBE 다운로드'],
         'sub' : [
-            ['setting', u'설정'],['download', u'다운로드'], ['manual', u'매뉴얼'], ['log', u'로그']
+            ['setting', u'설정'],['download', u'다운로드'], ['log', u'로그']
         ],
         'category' : 'service',
         'sub2' : {
             'download': [
                 ['TOP100',u'차트'],['NEW', u'최신앨범'], ['search', u'검색']
-            ],
-            'manual': [
-                ['README.md',u'VIBE 음악 다운로드']
             ],
         },
     }
