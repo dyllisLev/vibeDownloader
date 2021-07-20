@@ -599,7 +599,7 @@ class LogicDownload(LogicModuleBase):
         
         filename = re.sub('[\\\:*?"<>|]','',fileName)
         savePath = re.sub('[\\\:*?"<>|]','',savePath)
-        return {'trackId':trackId, 'path': os.path.join(savePath, fileName), 'albumTitle': albumTitle, 'trackNumber': trackNumber, 'trackTitle': trackTitle, 'artist': artist}
+        return {'trackId':trackId, 'path': os.path.join(savePath, fileName), 'albumTitle': albumTitle, 'trackNumber': trackNumber, 'trackTitle': trackTitle, 'artist': artist, 'type': type}
 
     @staticmethod
     def download(info):
@@ -610,7 +610,7 @@ class LogicDownload(LogicModuleBase):
         trackNumber = info['trackNumber']
         trackTitle = info['trackTitle']
         artist = info['artist']
-
+        type = info['type']
         logger.debug("다운로드 시작" + trackId)
         logger.debug(P.ModelSetting.to_dict()['ffmpegDownload'])
         logger.debug( path )
