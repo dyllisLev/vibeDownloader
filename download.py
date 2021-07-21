@@ -604,7 +604,7 @@ class LogicDownload(LogicModuleBase):
             fileName = saveFileNameByArtist+".mp3"
             savePath = savePathByArtist
         
-        filename = re.sub('[\\\:*?"<>|]','',fileName)
+        fileName = re.sub('[\\\:*?"<>|]','',fileName)
         savePath = re.sub('[\\\:*?"<>|]','',savePath)
         return {'trackId':trackId, 'path': os.path.join(savePath, fileName), 'albumTitle': albumTitle, 'trackNumber': trackNumber, 'trackTitle': trackTitle, 'artist': artist, 'type': type}
 
