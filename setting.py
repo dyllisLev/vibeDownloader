@@ -60,6 +60,12 @@ class LogicSetting(LogicModuleBase):
         'top100Download9' : False,
         'delayTime' : 3
 
+
+
+        #/////////////manage///////////////////
+        , 'rootPath' : os.path.join(path_data, package_name)
+        #/////////////manage///////////////////
+
     }
 
     def __init__(self, P):
