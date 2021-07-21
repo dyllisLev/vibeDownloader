@@ -406,8 +406,12 @@ class LogicDownload(LogicModuleBase):
         info = LogicDownload.top100List(P.ModelSetting.to_dict())
         cnt = 1
         for track in info['content']['response']['result']['chart']['items']['tracks']['track']:
-            result = LogicDownload.musicDownload(track, "TOP100", topRank=cnt)
-            cnt = cnt + 1
+            try:
+                result = LogicDownload.musicDownload(track, "TOP100", topRank=cnt)
+                cnt = cnt + 1
+            except Exception as e:
+                logger.debug('Exception:%s', e)
+                logger.debug(traceback.format_exc())
 
         from framework import socketio
         data = {'type':'success', 'msg':'TOP100 다운로드 완료.'}
@@ -425,8 +429,12 @@ class LogicDownload(LogicModuleBase):
             track = info['albumTracks']['response']['result']['tracks']['track']
             result = LogicDownload.musicDownload(track, "album")
         else:
-            for track in info['albumTracks']['response']['result']['tracks']['track']:
-                result = LogicDownload.musicDownload(track, "album")
+            try:
+                for track in info['albumTracks']['response']['result']['tracks']['track']:
+                    result = LogicDownload.musicDownload(track, "album")
+            except Exception as e:
+                logger.debug('Exception:%s', e)
+                logger.debug(traceback.format_exc())
         
         from framework import socketio
         data = {'type':'success', 'msg':'앨범 다운로드 완료.'}
@@ -440,7 +448,11 @@ class LogicDownload(LogicModuleBase):
         
         info = LogicDownload.artistInfo(P.ModelSetting.to_dict())
         for track in info['artistTrack']['response']['result']['tracks']['track']:
-            result = LogicDownload.musicDownload(track, "artist")
+            try:
+                result = LogicDownload.musicDownload(track, "artist")
+            except Exception as e:
+                logger.debug('Exception:%s', e)
+                logger.debug(traceback.format_exc())
         
         from framework import socketio
         data = {'type':'success', 'msg':'가수별 다운로드 완료.'}
