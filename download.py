@@ -684,7 +684,7 @@ class LogicDownload(LogicModuleBase):
                 LogicDownload.setLyrics(trackId, os.path.join(path))
                 if type != "track":
                     import time
-                    time.sleep(1)
+                    time.sleep(3)
         except Exception as e: 
             logger.error("다운로드 오류 trackId : " + trackId)
             logger.error("다운로드 오류 type: " + type)
