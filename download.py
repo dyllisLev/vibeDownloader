@@ -420,8 +420,13 @@ class LogicDownload(LogicModuleBase):
         logger.debug('LogicDownload musicDownloadAlbum process started!!!!')
         
         info = LogicDownload.albumInfo(P.ModelSetting.to_dict())
-        for track in info['albumTracks']['response']['result']['tracks']['track']:
+        logger.debug(info['albumTracks']['response']['result']['trackTotalCount'])
+        if info['albumTracks']['response']['result']['trackTotalCount'] == "1" :
+            track = info['albumTracks']['response']['result']['tracks']['track']
             result = LogicDownload.musicDownload(track, "album")
+        else:
+            for track in info['albumTracks']['response']['result']['tracks']['track']:
+                result = LogicDownload.musicDownload(track, "album")
         
         from framework import socketio
         data = {'type':'success', 'msg':'앨범 다운로드 완료.'}
@@ -462,6 +467,7 @@ class LogicDownload(LogicModuleBase):
     @staticmethod
     def getDownloadFilePath(track, type, topRank=None):
 
+        logger.debug(track)
         trackId = track['trackId']
         trackTitle = track['trackTitle']
         
