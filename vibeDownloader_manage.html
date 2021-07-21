@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+<div>
+  <div class="container">
+    
+    <h1>
+      Drag and Drop Between Trees</h1>
+  
+    <p>
+      Setting the <b>allowDrag</b> property to true allows users
+      to drag and drop nodes within the same <b>TreeView</b>.</p>
+    <p>
+      To allow dragging and dropping nodes between different 
+      <b>TreeView</b> controls, you must handle the <b>dragOver</b>
+      event and set the <b>cancel</b> parameter to true if
+      the operation is invalid, or to false if it is valid.</p>
+      
+    <label>
+      <input id="dragWithin" type="checkbox" checked="checked">
+      allow dragging within trees
+    </label>
+    <br />
+    <label>
+      <input id="dragBetween" type="checkbox" checked="checked">
+      allow dragging between trees
+    </label>
+      
+    <div class="row">
+      <div class="col-xs-6">
+        <div id="firstTree" class="short-tree"></div>
+      </div>
+      <div class="col-xs-6">
+        <div id="secondTree" class="short-tree"></div>
+      </div>
+    </div>
+    
+  
+  </div>
+</div>
+
+<div id="modalImport"></div>
+<script src="https://cdn.grapecity.com/wijmo/5.latest/controls/wijmo.nav.min.js"></script>
+<script src="https://cdn.grapecity.com/wijmo/5.latest/controls/wijmo.min.js"></script>
+<script type="text/javascript">
+var package_name = "{{arg['package_name'] }}";
+var sub = "{{arg['sub'] }}";
+var user_auth = "{{ arg['gdrive_user_auth'] }}";
+var sa_auth = "{{ arg['gdrive_sa_auth'] }}";
+var use_av = "{{ arg['use_av'] }}";
+
+
+
+$(document).ready(function(){
+
+
+  // search("/");
+});
+
+onload = function() {
+
+  // create the trees
+  var firstTree = new wijmo.nav.TreeView('#firstTree', {
+    itemsSource: [
+      { header: 'root 1', items: [
+        { header: 'Item 1.1' },
+        { header: 'Item 1.2' },
+        { header: 'Item 1.3' }]
+      }
+    ],
+    displayMemberPath: 'header',
+    childItemsPath: 'items',
+    allowDragging: true,
+    dragOver: dragOverBetweenTrees
+  });
+  var secondTree = new wijmo.nav.TreeView('#secondTree', {
+    itemsSource: [
+      { header: 'root 2', items: [
+        { header: 'Item 2.1' },
+        { header: 'Item 2.2' },
+        { header: 'Item 2.3' }]
+      }
+    ],
+    displayMemberPath: 'header',
+    childItemsPath: 'items',
+    allowDragging: true,
+    dragOver: dragOverBetweenTrees
+  });
+
+  // handle drag-drop within or between trees
+  function dragOverBetweenTrees(s, e) {
+    var t1 = e.dragSource.treeView;
+    var t2 = e.dropTarget.treeView;
+
+    // prevent dragging within trees
+    if (t1 == t2 && !document.getElementById('dragWithin').checked) {
+      e.cancel = true;
+    }
+    
+    // allow dragging between trees
+    if (t1 != t2 && document.getElementById('dragBetween').checked) {
+      e.cancel = false;
+    }
+  }
+}
+var selectedTree = null;
+function search(path){
+
+  $.ajax({
+    url: '/' + package_name + '/ajax/'+sub+'/getFolderList',
+    type: "POST", 
+    cache: false,
+    data: {'path':path},
+    dataType: "json",
+    success: function (data) {
+      if( data.ret == "success" ){
+        html = createTree(data)
+        $('#html').html(html);
+
+        $('#html').on('open_node.jstree', function (e, data) {
+          selectedTree = $('#'+data.node.id);
+          subsearch($('#'+data.node.id).data("path"));
+        }).jstree();
+      }
+    }
+  });
+}
+
+function subsearch(path){
+  $.ajax({
+    url: '/' + package_name + '/ajax/'+sub+'/getFolderList',
+    type: "POST", 
+    cache: false,
+    data: {'path':path},
+    dataType: "json",
+    success: function (data) {
+      if( data.ret == "success" ){
+        debugger
+        // html = createTree(data)
+        // $('#html').html(html);
+
+        // $('#html').on('open_node.jstree', function (e, data) {
+        //   subsearch($('#'+data.node.id).data("path"));
+        // }).jstree();
+      }
+    }
+  });
+}
+function createTree(data){
+
+  html = '';
+  html += '<ul>';
+  html += ' <li data-jstree=\'{ "opened" : true }\'>'+ data.path;
+  html += '   <ul>';
+  
+  first = "true";
+  for( i = 0 ; i < data.folderInfo.folder.length ; i++ ){
+    if( i > 0 ){
+      first = "false";
+    }
+    obj = data.folderInfo.folder[i];
+    // html += '     <li data-jstree=\'{ "selected" : true }\'>Child node 1</li>';
+    html += '     <li data-jstree=\'{ "selected" : '+first+' }\' data-path="'+obj.fullPath+'">'+obj.name;
+    if( obj.subObj ){
+      html += '       <ul><li></li></ul></li>';
+    }else{
+      html += '       </li>';
+    }
+  }
+  html += '   </ul>';
+  html += ' </li>';
+  html += '</ul>';
+  return html;
+}
+</script>    
+{% endblock %}

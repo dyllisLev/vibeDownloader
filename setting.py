@@ -58,6 +58,12 @@ class LogicSetting(LogicModuleBase):
         'top100Download8' : False,
         'top100Download9' : False
 
+
+
+        #/////////////manage///////////////////
+        , 'rootPath' : os.path.join(path_data, package_name)
+        #/////////////manage///////////////////
+
     }
 
     def __init__(self, P):
