@@ -45,6 +45,7 @@ class LogicSetting(LogicModuleBase):
         'ffmpegDownload' : False,
         'newAlbumDownload1' : False,
         'newAlbumDownload2' : False,
+        'newAlbumDownload3' : False,
         'albumId' : '',
         'artistId' : '',
         'top100Key' : '',
@@ -56,7 +57,8 @@ class LogicSetting(LogicModuleBase):
         'top100Download6' : False,
         'top100Download7' : False,
         'top100Download8' : False,
-        'top100Download9' : False
+        'top100Download9' : False,
+        'delayTime' : 3
 
     }
 
@@ -146,29 +148,10 @@ class LogicSetting(LogicModuleBase):
             P.logger.error(traceback.format_exc())
             return
 
-    #########################################################
-    # 필요함수 정의 및 구현부분
-    @staticmethod
-    def register_item(req):
-        try:
-            naverId = req['naverId']
-            naverPw = req['naverPw']
-            savePath = req['savePath']
-            auto_start = req['auto_start']
-            
-            entity = ModelItem(naverId, naverPw, savePath, auto_start)
-            entity.save()
-
-            return {'ret':'success', 'msg':'아이템 등록완료'}
-        except Exception as e:
-            logger.debug('Exception:%s', e)
-            logger.debug(traceback.format_exc())
-            return {'ret':'error', 'msg':str(e)}
-
 #########################################################
 # DB 모델 정의: @classmethod 사용
-class ModelItem(db.Model):
-    __tablename__ = '%s_item' % package_name
+class ModelAutoAlbum(db.Model):
+    __tablename__ = '%s_AutoAlbum' % package_name
     __table_args__ = {'mysql_collate': 'utf8_general_ci'}
     __bind_key__ = package_name
 
@@ -176,19 +159,13 @@ class ModelItem(db.Model):
     created_time = db.Column(db.DateTime)
     reserved = db.Column(db.JSON)
     # 사용할 필드 정의
-    naverId = db.Column(db.String)
-    naverPw = db.Column(db.String)
-    savePath = db.Column(db.String)
-    auto_start = db.Column(db.Boolean)
-    # setting_iinterval = db.Column(db.Integer)
-
-    def __init__(self, naverId, naverPw, savePath, auto_start):
+    albumType = db.Column(db.String)
+    albumId = db.Column(db.String)
+    
+    def __init__(self, albumType, albumId):
         self.created_time = datetime.now()
-        self.naverId = py_unicode(naverId)
-        self.naverPw = py_unicode(naverPw)
-        self.savePath = py_unicode(savePath)
-        self.auto_start = auto_start
-        # self.setting_iinterval = setting_iinterval
+        self.albumType = py_unicode(albumType)
+        self.albumId = py_unicode(albumId)
         
     def __repr__(self):
         return repr(self.as_dict())
@@ -212,64 +189,68 @@ class ModelItem(db.Model):
         return db.session.query(cls).filter_by(id=id).first()
     
     @classmethod
-    def get_by_string(cls, string):
-        return db.session.query(cls).filter_by(sample_string=sample_string).first()
-
+    def get_by_albumId(cls, albumId):
+        return db.session.query(cls).filter_by(albumId=albumId).first()
+    
     @classmethod
-    def get_by_integer(cls, integer):
-        return db.session.query(cls).filter_by(sample_integer=sample_integer).first()
+    def get_by_typeByAlbumId(cls, albumType, albumId):
+        return db.session.query(cls).filter_by(albumType=albumType,albumId=albumId).first()
 
-    @classmethod
-    def get_all_entities(cls):
-        return db.session.query(cls).all()
+    # @classmethod
+    # def get_by_integer(cls, integer):
+    #     return db.session.query(cls).filter_by(sample_integer=sample_integer).first()
 
-    @classmethod
-    def web_list(cls, req):
-        try:
-            ret = {}
-            page = 1
-            page_size = 30
-            job_id = ''
-            search = ''
-            category = ''
-            if 'page' in req.form:
-                page = int(req.form['page'])
-            if 'search_word' in req.form:
-                search = req.form['search_word']
-            if 'order' in req.form:
-                order = req.form['order']
+    # @classmethod
+    # def get_all_entities(cls):
+    #     return db.session.query(cls).all()
 
-            query = cls.make_query(search=search, order=order)
-            count = query.count()
-            query = query.limit(page_size).offset((page-1)*page_size)
-            logger.debug('cls count:%s', count)
-            lists = query.all()
-            ret['list'] = [item.as_dict() for item in lists]
-            ret['paging'] = Util.get_paging_info(count, page, page_size)
-            return ret
-        except Exception as e:
-            logger.error('Exception:%s', e)
-            logger.error(traceback.format_exc())
+    # @classmethod
+    # def web_list(cls, req):
+    #     try:
+    #         ret = {}
+    #         page = 1
+    #         page_size = 30
+    #         job_id = ''
+    #         search = ''
+    #         category = ''
+    #         if 'page' in req.form:
+    #             page = int(req.form['page'])
+    #         if 'search_word' in req.form:
+    #             search = req.form['search_word']
+    #         if 'order' in req.form:
+    #             order = req.form['order']
 
-    @classmethod
-    def make_query(cls, search='', order='desc'):
-        query = db.session.query(cls)
-        if search is not None and search != '':
-            if search.find('|') != -1:
-                tmp = search.split('|')
-                conditions = []
-                for tt in tmp:
-                    if tt != '':
-                        conditions.append(cls.sample_string.like('%'+tt.strip()+'%') )
-                query = query.filter(or_(*conditions))
-            elif search.find(',') != -1:
-                tmp = search.split(',')
-                for tt in tmp:
-                    if tt != '':
-                        query = query.filter(cls.sample_string.like('%'+tt.strip()+'%'))
-            else:
-                query = query.filter(cls.sample_string.like('%'+search+'%'))
+    #         query = cls.make_query(search=search, order=order)
+    #         count = query.count()
+    #         query = query.limit(page_size).offset((page-1)*page_size)
+    #         logger.debug('cls count:%s', count)
+    #         lists = query.all()
+    #         ret['list'] = [item.as_dict() for item in lists]
+    #         ret['paging'] = Util.get_paging_info(count, page, page_size)
+    #         return ret
+    #     except Exception as e:
+    #         logger.error('Exception:%s', e)
+    #         logger.error(traceback.format_exc())
 
-        if order == 'desc': query = query.order_by(desc(cls.id))
-        else: query = query.order_by(cls.id)
-        return query 
+    # @classmethod
+    # def make_query(cls, search='', order='desc'):
+    #     query = db.session.query(cls)
+    #     if search is not None and search != '':
+    #         if search.find('|') != -1:
+    #             tmp = search.split('|')
+    #             conditions = []
+    #             for tt in tmp:
+    #                 if tt != '':
+    #                     conditions.append(cls.sample_string.like('%'+tt.strip()+'%') )
+    #             query = query.filter(or_(*conditions))
+    #         elif search.find(',') != -1:
+    #             tmp = search.split(',')
+    #             for tt in tmp:
+    #                 if tt != '':
+    #                     query = query.filter(cls.sample_string.like('%'+tt.strip()+'%'))
+    #         else:
+    #             query = query.filter(cls.sample_string.like('%'+search+'%'))
+
+    #     if order == 'desc': query = query.order_by(desc(cls.id))
+    #     else: query = query.order_by(cls.id)
+    #     return query 

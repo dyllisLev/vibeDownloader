@@ -13,6 +13,7 @@
   </nav>
   <form id='setting' name='setting'>
   <div class="tab-content" id="nav-tabContent">
+    
    {{ macros.m_tab_content_start('normal', true) }}
     {{ macros.setting_input_text('naverId', '네이버 아이디', value=arg['naverId'], desc=['네이버 아이디']) }}
 
@@ -152,6 +153,7 @@
     {{ macros.setting_input_text('saveFileNameByAlbum', '앨범 저장 파일명', value=arg['saveFileNameByAlbum'], desc=['앨범 저장 파일명']) }}
     {{ macros.setting_input_text_and_buttons('savePathByArtist', '가수별 저장 경로', [['btn_add_path4', '경로추가']],value=arg['savePathByArtist'], desc=['가수별 저장 경로']) }}
     {{ macros.setting_input_text('saveFileNameByArtist', '가수별 저장 파일명', value=arg['saveFileNameByArtist'], desc=['가수별 저장 경로']) }}
+    {{ macros.setting_input_text('delayTime', '다운로드지연시간', value=arg['delayTime'], desc=['다운로드지연시간(초)']) }}
    {{ macros.m_tab_content_end() }}
    {{ macros.m_tab_content_start('auto', false) }}
     {{ macros.setting_global_scheduler_sub_button(arg['scheduler'], arg['is_running']) }}
@@ -190,10 +192,9 @@
     {{ macros.setting_checkbox('top100Download7', '국내 발라드 Top100', value=arg['top100Download7'], desc='차트 - 국내 발라드 Top100') }}
     {{ macros.setting_checkbox('top100Download8', '국내 댄스 Top100', value=arg['top100Download8'], desc='차트 - 국내 댄스 Top100') }}
     {{ macros.setting_checkbox('top100Download9', '음악검색 Top100', value=arg['top100Download9'], desc='차트 - 음악검색 Top100') }}
-    <!--
-    {{ macros.setting_checkbox('newAlbumDownload1', '최신앨범[국내] 다운로드', value=arg['newAlbumDownload1'], desc='최신앨범[국내] 다운로드') }}
-    {{ macros.setting_checkbox('newAlbumDownload2', '최신앨범[해외] 다운로드', value=arg['newAlbumDownload2'], desc='최신앨범[해외] 다운로드') }}
-    -->
+    {{ macros.setting_checkbox('newAlbumDownload1', '최신앨범[국내]', value=arg['newAlbumDownload1'], desc='최신앨범[국내]') }}
+    {{ macros.setting_checkbox('newAlbumDownload2', '최신앨범[해외]', value=arg['newAlbumDownload2'], desc='최신앨범[해외]') }}
+    {{ macros.setting_checkbox('newAlbumDownload3', '최신앨범[모든]', value=arg['newAlbumDownload3'], desc='최신앨범[모든]') }}
     {{ macros.setting_checkbox('auto_start', '시작시 자동실행', value=arg['auto_start'], desc='On : 시작시 자동으로 스케쥴러에 등록됩니다.') }}
     {{ macros.m_tab_content_end() }}
   </div> <!--전체-->

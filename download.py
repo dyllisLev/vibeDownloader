@@ -25,6 +25,7 @@ logger = P.logger
 package_name = P.package_name
 ModelSetting = P.ModelSetting
 
+
 #########################################################
 
 class LogicDownload(LogicModuleBase):
@@ -388,15 +389,57 @@ class LogicDownload(LogicModuleBase):
                 P.ModelSetting.set("top100Key", "9")
                 LogicDownload.musicDownloadTOP100()
             if P.ModelSetting.get("newAlbumDownload1") == "True":
-                logger.debug('신규 국내')
+                LogicDownload.musicDownloadNewAlbum(1)
             if P.ModelSetting.get("newAlbumDownload2") == "True":
-                logger.debug('신규 해외')
+                LogicDownload.musicDownloadNewAlbum(2)
+            if P.ModelSetting.get("newAlbumDownload3") == "True":
+                LogicDownload.musicDownloadNewAlbum(3)
             
             logger.debug('LogicDownload main process END!!!!')
             
         except Exception as e:
             logger.debug('Exception:%s', e)
             logger.debug(traceback.format_exc())
+    
+    @staticmethod
+    def musicDownloadNewAlbum(type):
+        logger.debug('LogicDownload musicDownloadNewAlbum process started!!!!')
+
+        
+        info = None
+        if type == 1:
+            req = {'search':'국내'}
+            info = LogicDownload.newalbum(req)
+        elif type == 2:
+            req = {'search':'해외'}
+            info = LogicDownload.newalbum(req)
+        elif type == 3:
+            req = {'search':'모든앨범'}
+            info = LogicDownload.newalbum(req)
+
+        from .setting import LogicSetting, ModelAutoAlbum
+        
+        for album in info['content']['response']['result']['chart']['albums']['album']:
+            try:
+                if ModelAutoAlbum.get_by_typeByAlbumId(req['search'], album['albumId']) is None:
+                    P.ModelSetting.set("albumId", album['albumId'])
+                    LogicDownload.musicDownloadAlbum()
+                    entity = ModelAutoAlbum(req['search'], album['albumId'])
+                    entity.save()
+                    logger.debug("다운로드!")
+                else:
+                    logger.debug("이미 다운로드!")
+
+            except Exception as e:
+                logger.debug('Exception:%s', e)
+                logger.debug(traceback.format_exc())
+
+        # from framework import socketio
+        # data = {'type':'success', 'msg':'최신앨범 다운로드 완료.'}
+        # socketio.emit('notify', data, namespace='/framework', broadcast=True)
+        
+        logger.debug('LogicDownload musicDownloadNewAlbum process END!!!!')
+    
     
     @staticmethod
     def musicDownloadTOP100():
@@ -424,7 +467,7 @@ class LogicDownload(LogicModuleBase):
         logger.debug('LogicDownload musicDownloadAlbum process started!!!!')
         
         info = LogicDownload.albumInfo(P.ModelSetting.to_dict())
-        logger.debug(info['albumTracks']['response']['result']['trackTotalCount'])
+        
         if info['albumTracks']['response']['result']['trackTotalCount'] == "1" :
             track = info['albumTracks']['response']['result']['tracks']['track']
             result = LogicDownload.musicDownload(track, "album")
@@ -471,7 +514,6 @@ class LogicDownload(LogicModuleBase):
     def musicDownload(track, type, topRank=None):
 
         info = LogicDownload.getDownloadFilePath(track, type, topRank)
-        logger.debug(info)
         LogicDownload.download(info)
         
         return True
@@ -479,7 +521,7 @@ class LogicDownload(LogicModuleBase):
     @staticmethod
     def getDownloadFilePath(track, type, topRank=None):
 
-        logger.debug(track)
+        # logger.debug(track)
         trackId = track['trackId']
         trackTitle = track['trackTitle']
         
@@ -498,7 +540,7 @@ class LogicDownload(LogicModuleBase):
                 artist = artist + artistTmp['artistName']
         
         artist = artist.replace('/', '')
-        from datetime import datetime
+        
         yyyy = datetime.today().year        # 현재 연도 가져오기
         mm = str(datetime.today().month).rjust(2,"0") # 현재 월 가져오기
         dd = str(datetime.today().day).rjust(2,"0") # 현재 일 가져오기
@@ -684,7 +726,8 @@ class LogicDownload(LogicModuleBase):
                 LogicDownload.setLyrics(trackId, os.path.join(path))
                 if type != "track":
                     import time
-                    time.sleep(3)
+                    delayTime = P.ModelSetting.to_dict()['delayTime']
+                    time.sleep(delayTime)
         except Exception as e: 
             logger.error("다운로드 오류 trackId : " + trackId)
             logger.error("다운로드 오류 type: " + type)
