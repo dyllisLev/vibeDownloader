@@ -635,13 +635,7 @@ class LogicDownload(LogicModuleBase):
         logger.debug( path )
         logger.debug( os.path.isfile( path ) )
 
-        if LogicDownload.session is None :
-
-            naverId = P.ModelSetting.to_dict()['naverId']
-            naverPw = P.ModelSetting.to_dict()['naverPw']
-            LogicDownload.session = LogicDownload.naver_login(naverId, naverPw)
-            if LogicDownload.session is None :
-                return False
+        
         
         try:
 
@@ -650,6 +644,13 @@ class LogicDownload(LogicModuleBase):
                 logger.debug("이미 같은파일이 있음")
             else:
                 
+                if LogicDownload.session is None :
+                    naverId = P.ModelSetting.to_dict()['naverId']
+                    naverPw = P.ModelSetting.to_dict()['naverPw']
+                    LogicDownload.session = LogicDownload.naver_login(naverId, naverPw)
+                    if LogicDownload.session is None :
+                        return False
+                        
                 if not os.path.isdir(os.path.split(path)[0]):
                     os.makedirs(os.path.split(path)[0])
                 
