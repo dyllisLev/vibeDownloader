@@ -58,7 +58,7 @@ class LogicDownload(LogicModuleBase):
 
     # 플러그인 로딩시 실행할 내용이 있으면 작성
     def plugin_load(self):
-        self.db_migration()
+        # self.db_migration()
         self.initialize()
 
     def process_menu(self, sub, req):
