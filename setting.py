@@ -78,6 +78,7 @@ class LogicSetting(LogicModuleBase):
         arg = P.ModelSetting.to_dict()
         arg['sub'] = self.name
         P.logger.debug('sub:%s', sub)
+        
         if sub == 'setting':    # 설정페이지의 경우 스케쥴러 포함여부와 실행상태 전달
             job_id = '%s_%s' % (self.P.package_name, self.name)
             arg['scheduler'] = str(scheduler.is_include(job_id))
@@ -254,3 +255,120 @@ class ModelAutoAlbum(db.Model):
     #     if order == 'desc': query = query.order_by(desc(cls.id))
     #     else: query = query.order_by(cls.id)
     #     return query 
+
+class ModelDownloadList(db.Model):
+    __tablename__ = '%s_DownloadList' % package_name
+    __table_args__ = {'mysql_collate': 'utf8_general_ci'}
+    __bind_key__ = package_name
+
+    id = db.Column(db.Integer, primary_key=True)
+    created_time = db.Column(db.DateTime)
+    reserved = db.Column(db.JSON)
+    # 사용할 필드 정의
+    downloadType = db.Column(db.String)
+    downloadDetail = db.Column(db.String)
+    downalodCnt = db.Column(db.Integer)
+    downalodAllCnt = db.Column(db.Integer)
+    downalodStartDate = db.Column(db.DateTime)
+    downalodEndDate = db.Column(db.DateTime)
+    downalodStatus = db.Column(db.String)
+    
+    def __init__(self):
+        self.created_time = datetime.now()
+        
+    def __repr__(self):
+        return repr(self.as_dict())
+
+    def as_dict(self):
+        ret = {x.name: getattr(self, x.name) for x in self.__table__.columns}
+        ret['created_time'] = self.created_time.strftime('%m-%d %H:%M:%S') 
+        return ret
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def delete(cls, id):
+        db.session.query(cls).filter_by(id=id).delete()
+        db.session.commit()
+
+    @classmethod
+    def getNextId(cls):
+        return db.session.query(cls).count()+1
+
+    @classmethod
+    def get_by_id(cls, id):
+        return db.session.query(cls).filter_by(id=id).first()
+    
+    @classmethod
+    def get_by_albumId(cls, albumId):
+        return db.session.query(cls).filter_by(albumId=albumId).first()
+    
+    @classmethod
+    def get_by_typeByAlbumId(cls, albumType, albumId):
+        return db.session.query(cls).filter_by(albumType=albumType,albumId=albumId).first()
+
+    # @classmethod
+    # def get_by_integer(cls, integer):
+    #     return db.session.query(cls).filter_by(sample_integer=sample_integer).first()
+
+    # @classmethod
+    # def get_all_entities(cls):
+    #     return db.session.query(cls).all()
+
+    @classmethod
+    def web_list(cls):
+        try:
+            ret = {}
+            page = 1
+            page_size = 30
+            job_id = ''
+            search = ''
+            category = ''
+            # if 'page' in req.form:
+            #     page = int(req.form['page'])
+            # if 'search_word' in req.form:
+            #     search = req.form['search_word']
+            # if 'order' in req.form:
+            #     order = req.form['order']
+
+            query = cls.make_query(search=search, order='desc')
+            count = query.count()
+            query = query.limit(page_size).offset((page-1)*page_size)
+            logger.debug('cls count:%s', count)
+            lists = query.all()
+            for list in lists:
+                list.downalodStartDate = list.downalodStartDate.strftime('%m-%d %H:%M:%S')
+                if list.downalodEndDate is not None:
+                    list.downalodEndDate = list.downalodEndDate.strftime('%m-%d %H:%M:%S')
+                
+            ret['list'] = [item.as_dict() for item in lists]
+            ret['paging'] = Util.get_paging_info(count, page, page_size)
+            return ret
+        except Exception as e:
+            logger.error('Exception:%s', e)
+            logger.error(traceback.format_exc())
+
+    @classmethod
+    def make_query(cls, search='', order='desc'):
+        query = db.session.query(cls)
+        if search is not None and search != '':
+            if search.find('|') != -1:
+                tmp = search.split('|')
+                conditions = []
+                for tt in tmp:
+                    if tt != '':
+                        conditions.append(cls.sample_string.like('%'+tt.strip()+'%') )
+                query = query.filter(or_(*conditions))
+            elif search.find(',') != -1:
+                tmp = search.split(',')
+                for tt in tmp:
+                    if tt != '':
+                        query = query.filter(cls.sample_string.like('%'+tt.strip()+'%'))
+            else:
+                query = query.filter(cls.sample_string.like('%'+search+'%'))
+
+        if order == 'desc': query = query.order_by(desc(cls.id))
+        else: query = query.order_by(cls.id)
+        return query 

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+ 
+<div>
+  <form id="form_search" class="form-inline" style="text-align:left">
+    <!-- <div class="container-fluid">
+      <div class="row show-grid">
+        <span class="col-md-2">
+          <select id="option" name="option" class="form-control form-control-sm">
+            <option value="all">전체</option>
+            <option value="1">정상</option>
+            <option value="2">중복</option>
+            <option value="3">매칭실패</option>
+            <option value="4">태그정보없음</option>
+            <option value="5">검색결과없음</option>
+            <option value="6">오류</option>
+            <option value="7">중복삭제</option>
+            <option value="8">장르예외</option>
+          </select>
+        </span>
+        <span class="col-md-8">
+          <input id="search_word" name="search_word" class="form-control form-control-sm w-75" type="text" placeholder="" aria-label="Search">
+          <button id="search" class="btn btn-sm btn-outline-success">검색</button>
+          <button id="reset_btn" class="btn btn-sm btn-outline-success">리셋</button>
+        </span>
+        <span class="col-md-2"></span>
+      </div> 
+    </div> -->
+  </form>
+  <div id='page1'></div>
+  {{ macros.m_hr_head_top() }}
+  {{ macros.m_row_start('0') }}
+  <div class="col-sm-1" style="text-align:center; word-break:break-all;">
+    <strong>분류</strong>
+  </div>
+  <div class="col-sm-5" style="text-align:center; word-break:break-all;">
+    <strong>상세</strong>
+  </div>
+  <div class="col-sm-1" style="text-align:center; word-break:break-all;">
+    <strong>건수</strong>
+  </div>
+  <div class="col-sm-2" style="text-align:center; word-break:break-all;">
+    <strong>시작시간</strong>
+  </div>
+  <div class="col-sm-2" style="text-align:center; word-break:break-all;">
+    <strong>종료시간</strong>
+  </div>
+  <div class="col-sm-1" style="text-align:center; word-break:break-all;">
+    <strong>상태</strong>
+  </div>
+  {{ macros.m_row_end() }}
+  {{ macros.m_hr_head_bottom() }}
+  <div id="list_div"></div>
+  <div id='page2'></div>
+</div>
+
+<script type="text/javascript">
+var package_name = "{{arg['package_name'] }}";
+var sub = "{{arg['sub'] }}";
+var current_data = null;
+var dataList = null;
+
+function request_search() {
+  
+  $.ajax({
+    url: '/' + package_name + '/ajax/'+sub+'/select',
+    type: "POST", 
+    cache: false,
+    data: null,
+    dataType: "json",
+    success: function (data) {
+      window.scrollTo(0,0);
+      make_list(data.list)
+      // make_page_html(data.paging)
+    }
+  });
+}
+
+function make_list(data) {
+  str = '';
+  for (i in data) {
+    str += m_row_start(0);
+    str += '<div class="col-sm-1" style="text-align:center; word-break:break-all;font-weight:bold">';
+    str += isEmpty(data[i].downloadType);
+    str += '</div>';
+    str += '<div class="col-sm-5" style="text-align:center; word-break:break-all;">';
+    str += isEmpty(data[i].downloadDetail);
+    str += '</div>';
+    str += '<div class="col-sm-1" style="text-align:center; word-break:break-all;">';
+    str += isEmpty(data[i].downalodCnt) + '/' + isEmpty(data[i].downalodAllCnt);
+    str += '</div>';
+    str += '<div class="col-sm-2" style="text-align:center; word-break:break-all;">';
+    str += isEmpty(data[i].downalodStartDate);
+    str += '</div>';
+    str += '<div class="col-sm-2" style="text-align:center; word-break:break-all;">';
+    str += isEmpty(data[i].downalodEndDate);
+    str += '</div>';
+    str += '<div class="col-sm-1" style="text-align:center; word-break:break-all;">';
+      str += isEmpty(data[i].downalodStatus);
+    str += '</div>';
+    str += m_row_end();
+    if (i != data.length -1) str += m_hr();
+     
+  }
+  dataList = data;
+  document.getElementById("list_div").innerHTML = str;
+}
+
+$(document).ready(function(){
+  request_search();
+  setInterval('request_search()',5000); 
+});
+
+function isEmpty(value){
+  if(value == null || value.length === 0) {
+    return "";
+  } else{
+    return value;
+  }
+}
+
+</script>    
+{% endblock %}

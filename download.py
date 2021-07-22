@@ -76,10 +76,25 @@ class LogicDownload(LogicModuleBase):
         try:
             ret = {'ret':'success', 'data':[]}
             logger.debug('AJAX %s', sub)
-            if sub == 'top100':
-                ret = LogicDownload.top100List(req.form)
-            elif sub == 'musicDownloadById':
+            
+            ################################################
+            ##################다운로드 시작##################
+            ################################################
+            #한곡 다운로드
+            if sub == 'musicDownloadById':
                 ret = LogicDownload.musicDownloadById(req.form)
+            #전체 다운로드
+            elif sub == 'allDownload':
+                ret = LogicDownload.allDownload(req.form)
+            ################################################
+            ##################다운로드 종료##################
+            ################################################
+
+            ################################################
+            ##################조회영역 시작##################
+            ################################################
+            elif sub == 'top100':
+                ret = LogicDownload.top100List(req.form)
             elif sub == 'new':
                 ret = LogicDownload.newalbum(req.form)
             elif sub == 'albumInfo':
@@ -94,8 +109,11 @@ class LogicDownload(LogicModuleBase):
                 ret = LogicDownload.searchByAlbum(req.form)
             elif sub == 'musicPlay':
                 ret = LogicDownload.musicPlay(req.form)
-            elif sub == 'allDownload':
-                ret = LogicDownload.allDownload(req.form)
+            elif sub == 'select':
+                ret = LogicDownload.downloadList()
+            ################################################
+            ##################조회영역 끝##################
+            ################################################
                 
             #     ret = LogicDownload.register_item(req.form)
             # elif sub == 'modify_item':
@@ -111,27 +129,79 @@ class LogicDownload(LogicModuleBase):
             logger.error(traceback.format_exc())
             return jsonify({'ret':'exception', 'msg':str(e)})
 
-    #########################################################
-    def db_migration(self):
+    # 스케쥴 요청처리
+    @celery.task
+    def task():
         try:
-            # db 마이그레이션: 필요한 경우에 작성 
-            # ex) 배포 후 버전업에 따라 DB에 필드의 추가가 필요하거나 할떄 사용 설정의 db_version을 업데이트 하며 사용
-            pass
+            # 여기다 로직 구현
+            logger.debug('LogicDownload main process started!!!!')
+            if P.ModelSetting.get("top100Download1") == "True":
+                P.ModelSetting.set("top100Key", "1")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download2") == "True":
+                P.ModelSetting.set("top100Key", "2")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download3") == "True":
+                P.ModelSetting.set("top100Key", "3")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download4") == "True":
+                P.ModelSetting.set("top100Key", "4")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download5") == "True":
+                P.ModelSetting.set("top100Key", "5")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download6") == "True":
+                P.ModelSetting.set("top100Key", "6")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download7") == "True":
+                P.ModelSetting.set("top100Key", "7")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download8") == "True":
+                P.ModelSetting.set("top100Key", "8")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("top100Download9") == "True":
+                P.ModelSetting.set("top100Key", "9")
+                LogicDownload.musicDownloadTOP100()
+            if P.ModelSetting.get("newAlbumDownload1") == "True":
+                LogicDownload.musicDownloadNewAlbum(1)
+            if P.ModelSetting.get("newAlbumDownload2") == "True":
+                LogicDownload.musicDownloadNewAlbum(2)
+            if P.ModelSetting.get("newAlbumDownload3") == "True":
+                LogicDownload.musicDownloadNewAlbum(3)
+            
+            logger.debug('LogicDownload main process END!!!!')
+            
         except Exception as e:
             logger.debug('Exception:%s', e)
             logger.debug(traceback.format_exc())
 
-    def initialize(self):
-        try:
-            # 플러그인 로딩시 실행할 것들: Thread나 Queue 생성, 전역변수나 설정값들 초기화 등 처리
-            pass
-        except Exception as e: 
-            P.logger.error('Exception:%s', e)
-            P.logger.error(traceback.format_exc())
-            return
 
-    #########################################################
+    # #########################################################
+    # def db_migration(self):
+    #     try:
+    #         # db 마이그레이션: 필요한 경우에 작성 
+    #         # ex) 배포 후 버전업에 따라 DB에 필드의 추가가 필요하거나 할떄 사용 설정의 db_version을 업데이트 하며 사용
+    #         pass
+    #     except Exception as e:
+    #         logger.debug('Exception:%s', e)
+    #         logger.debug(traceback.format_exc())
+
+    # def initialize(self):
+    #     try:
+    #         # 플러그인 로딩시 실행할 것들: Thread나 Queue 생성, 전역변수나 설정값들 초기화 등 처리
+    #         pass
+    #     except Exception as e: 
+    #         P.logger.error('Exception:%s', e)
+    #         P.logger.error(traceback.format_exc())
+    #         return
+
+    # #########################################################
     # 필요함수 정의 및 구현부분
+
+
+    # #########################################################
+    # ###################조회영역 시작##########################
+    # #########################################################
     @staticmethod
     def musicPlay(req):
 
@@ -196,6 +266,7 @@ class LogicDownload(LogicModuleBase):
             dictionary = xmltodict.parse(resp.text)
             artistInfo = json.dumps(dictionary) 
         return {'ret':'success', 'trackInfo':json.loads(trackInfo)['response']['result'], 'albumInfo':json.loads(albumInfo)['response']['result'], 'artistInfo':json.loads(artistInfo)['response']['result']}
+    
     @staticmethod
     def top100List(req):
 
@@ -287,7 +358,15 @@ class LogicDownload(LogicModuleBase):
             dictionary = xmltodict.parse(resp.text)
             json_object = json.dumps(dictionary) 
         return {'ret':'success', 'content':json.loads(json_object)}
-    
+
+    @staticmethod
+    def downloadList():
+        from .setting import ModelDownloadList
+        return ModelDownloadList.web_list()
+
+    # #########################################################
+    # ###################조회영역 끝############################
+    # #########################################################
     @staticmethod
     def musicDownloadById(req):
         
@@ -296,42 +375,22 @@ class LogicDownload(LogicModuleBase):
         
         trackInfo = None
         result = False
-        if downloadType == "TOP100":
+        
+        resp = requests.get('https://apis.naver.com/vibeWeb/musicapiweb/track/'+trackId)
+        if resp.status_code == 200 :
+            dictionary = xmltodict.parse(resp.text)
+            trackInfo = json.loads(json.dumps(dictionary))
 
-            P.ModelSetting.set("top100Key", req['top100Key'])
-            info = LogicDownload.top100List(req)
-
+            data = {'type':'success', 'msg':trackInfo['response']['result']['track']['trackTitle'] + ' 다운로드 시작.'}
+            socketio.emit('notify', data, namespace='/framework', broadcast=True)
             
-            for track in info['content']['response']['result']['chart']['items']['tracks']['track']:
-                result = LogicDownload.musicDownload(track, downloadType)
-
-            if result is True:
-                return {'ret':'success', 'content':info}
-            else:
-                return {'ret':'failed'}
-        elif downloadType == "album":
+            downInfo = {'type':downloadType,'detail':trackInfo['response']['result']['track']['trackTitle'],'cnt': 0, 'allCnt':1, 'downalodStatus' : '다운로드중'}
+            id = LogicDownload.insertDownList(downInfo)
+            logger.debug("id : %s", id)
+            thread = threading.Thread(target=LogicDownload.musicDownload, args=(trackInfo['response']['result']['track'], downloadType, None, id))
+            thread.setDaemon(True)
+            thread.start()
             
-            info = LogicDownload.albumInfo(req)
-
-            for track in info['albumTracks']['response']['result']['tracks']['track']:
-                result = LogicDownload.musicDownload(track, downloadType)
-
-            if result is True:
-                return {'ret':'success', 'content':info}
-            else:
-                return {'ret':'failed'}
-
-        else:
-            resp = requests.get('https://apis.naver.com/vibeWeb/musicapiweb/track/'+trackId)
-            if resp.status_code == 200 :
-                dictionary = xmltodict.parse(resp.text)
-                trackInfo = json.loads(json.dumps(dictionary))
-                result = LogicDownload.musicDownload(trackInfo['response']['result']['track'], downloadType)
-
-                if result is True:
-                    return {'ret':'success', 'content':trackInfo}
-                else:
-                    return {'ret':'failed'}
 
     @staticmethod
     def allDownload(req):
@@ -356,50 +415,7 @@ class LogicDownload(LogicModuleBase):
             thread.start()
         return {'ret':'success'}
 
-    @celery.task
-    def task():
-        try:
-            # 여기다 로직 구현
-            logger.debug('LogicDownload main process started!!!!')
-            if P.ModelSetting.get("top100Download1") == "True":
-                P.ModelSetting.set("top100Key", "1")
-                LogicDownload.musicDownloadTOP100()
-            if P.ModelSetting.get("top100Download2") == "True":
-                P.ModelSetting.set("top100Key", "2")
-                LogicDownload.musicDownloadTOP100()
-            if P.ModelSetting.get("top100Download3") == "True":
-                P.ModelSetting.set("top100Key", "3")
-                LogicDownload.musicDownloadTOP100()
-            if P.ModelSetting.get("top100Download4") == "True":
-                P.ModelSetting.set("top100Key", "4")
-                LogicDownload.musicDownloadTOP100()
-            if P.ModelSetting.get("top100Download5") == "True":
-                P.ModelSetting.set("top100Key", "5")
-                LogicDownload.musicDownloadTOP100()
-            if P.ModelSetting.get("top100Download6") == "True":
-                P.ModelSetting.set("top100Key", "6")
-                LogicDownload.musicDownloadTOP100()
-            if P.ModelSetting.get("top100Download7") == "True":
-                P.ModelSetting.set("top100Key", "7")
-                LogicDownload.musicDownloadTOP100()
-            if P.ModelSetting.get("top100Download8") == "True":
-                P.ModelSetting.set("top100Key", "8")
-                LogicDownload.musicDownloadTOP100()
-            if P.ModelSetting.get("top100Download9") == "True":
-                P.ModelSetting.set("top100Key", "9")
-                LogicDownload.musicDownloadTOP100()
-            if P.ModelSetting.get("newAlbumDownload1") == "True":
-                LogicDownload.musicDownloadNewAlbum(1)
-            if P.ModelSetting.get("newAlbumDownload2") == "True":
-                LogicDownload.musicDownloadNewAlbum(2)
-            if P.ModelSetting.get("newAlbumDownload3") == "True":
-                LogicDownload.musicDownloadNewAlbum(3)
-            
-            logger.debug('LogicDownload main process END!!!!')
-            
-        except Exception as e:
-            logger.debug('Exception:%s', e)
-            logger.debug(traceback.format_exc())
+    
     
     @staticmethod
     def musicDownloadNewAlbum(type):
@@ -445,20 +461,28 @@ class LogicDownload(LogicModuleBase):
     def musicDownloadTOP100():
         logger.debug('LogicDownload musicDownloadTOP100 process started!!!!')
 
-        logger.debug(P.ModelSetting.to_dict())
         info = LogicDownload.top100List(P.ModelSetting.to_dict())
+        
+        downInfo = {'type':"TOP100",'detail':LogicDownload.getTop100Title(P.ModelSetting.to_dict()['top100Key']),'cnt': 0, 'allCnt':info['content']['response']['result']['chart']['items']['trackTotalCount'], 'downalodStatus' : '다운로드중'}
+        id = LogicDownload.insertDownList(downInfo)
+        
         cnt = 1
         for track in info['content']['response']['result']['chart']['items']['tracks']['track']:
             try:
                 result = LogicDownload.musicDownload(track, "TOP100", topRank=cnt)
                 cnt = cnt + 1
+
+                downInfo = {'id':id, 'downalodCnt': cnt}
+                LogicDownload.updateDownList(downInfo)
             except Exception as e:
                 logger.debug('Exception:%s', e)
                 logger.debug(traceback.format_exc())
 
-        from framework import socketio
         data = {'type':'success', 'msg':'TOP100 다운로드 완료.'}
         socketio.emit('notify', data, namespace='/framework', broadcast=True)
+
+        downInfo = {'id':id, 'downalodCnt': info['content']['response']['result']['chart']['items']['trackTotalCount'], 'downalodEndDate': datetime.now(), 'downalodStatus' : '종료'}
+        LogicDownload.updateDownList(downInfo)
         
         logger.debug('LogicDownload musicDownloadTOP100 process END!!!!')
     
@@ -467,19 +491,32 @@ class LogicDownload(LogicModuleBase):
         logger.debug('LogicDownload musicDownloadAlbum process started!!!!')
         
         info = LogicDownload.albumInfo(P.ModelSetting.to_dict())
-        
+        downInfo = {'type':"앨범",'detail':info['albumInfo']['response']['result']['album']['albumTitle'],'cnt': 0, 'allCnt':info['albumTracks']['response']['result']['trackTotalCount'], 'downalodStatus' : '다운로드중'}
+        id = LogicDownload.insertDownList(downInfo)
+
+        cnt = 0
         if info['albumTracks']['response']['result']['trackTotalCount'] == "1" :
             track = info['albumTracks']['response']['result']['tracks']['track']
             result = LogicDownload.musicDownload(track, "album")
+
+            cnt = cnt + 1
+            downInfo = {'id':id, 'downalodCnt': cnt}
+            LogicDownload.updateDownList(downInfo)
         else:
             try:
                 for track in info['albumTracks']['response']['result']['tracks']['track']:
+                    
                     result = LogicDownload.musicDownload(track, "album")
+                    cnt = cnt + 1
+                    downInfo = {'id':id, 'downalodCnt': cnt}
+                    LogicDownload.updateDownList(downInfo)
+
             except Exception as e:
                 logger.debug('Exception:%s', e)
                 logger.debug(traceback.format_exc())
         
-        from framework import socketio
+        downInfo = {'id':id, 'downalodCnt': info['albumTracks']['response']['result']['trackTotalCount'], 'downalodEndDate': datetime.now(), 'downalodStatus' : '종료'}
+        LogicDownload.updateDownList(downInfo)
         data = {'type':'success', 'msg':'앨범 다운로드 완료.'}
         socketio.emit('notify', data, namespace='/framework', broadcast=True)
         
@@ -490,32 +527,52 @@ class LogicDownload(LogicModuleBase):
         logger.debug('LogicDownload musicDownloadArtist process started!!!!')
         
         info = LogicDownload.artistInfo(P.ModelSetting.to_dict())
+
+        downInfo = {'type':"가수",'detail':info['artistInfo']['response']['result']['artist']['artistName'],'cnt': 0, 'allCnt':info['artistTrack']['response']['result']['trackTotalCount'], 'downalodStatus' : '다운로드중'}
+        id = LogicDownload.insertDownList(downInfo)
+
+        cnt = 0
         for track in info['artistTrack']['response']['result']['tracks']['track']:
             try:
                 result = LogicDownload.musicDownload(track, "artist")
+
+                cnt = cnt + 1
+                downInfo = {'id':id, 'downalodCnt': cnt}
+                LogicDownload.updateDownList(downInfo)
             except Exception as e:
                 logger.debug('Exception:%s', e)
                 logger.debug(traceback.format_exc())
         
-        from framework import socketio
         data = {'type':'success', 'msg':'가수별 다운로드 완료.'}
         socketio.emit('notify', data, namespace='/framework', broadcast=True)
-        
+        downInfo = {'id':id, 'downalodCnt': info['artistTrack']['response']['result']['trackTotalCount'], 'downalodEndDate': datetime.now(), 'downalodStatus' : '종료'}
+        LogicDownload.updateDownList(downInfo)
         logger.debug('LogicDownload musicDownloadArtist process END!!!!')
 
-    
-
-#/////////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////////
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
+    # 다운로드 모듈
     @staticmethod
-    def musicDownload(track, type, topRank=None):
+    def musicDownload(track, type, topRank=None, id=None):
 
         info = LogicDownload.getDownloadFilePath(track, type, topRank)
-        LogicDownload.download(info)
-        
+        trackId = LogicDownload.download(info)
+        if trackId != False:
+            LogicDownload.setMetadata(trackId)
+            LogicDownload.moveMusic(info)
+
+        if type == "track":
+            data = {'type':'success', 'msg':track['trackTitle'] + ' 다운로드 완료.'}
+            socketio.emit('notify', data, namespace='/framework', broadcast=True)
+
+            logger.debug(id)
+            downInfo = {'id':id, 'downalodCnt': 1, 'downalodEndDate': datetime.now(), 'downalodStatus' : '종료'}
+            LogicDownload.updateDownList(downInfo)
+
         return True
 
     @staticmethod
@@ -596,24 +653,8 @@ class LogicDownload(LogicModuleBase):
             rank = str(rank).rjust(3,"0")
 
             key = P.ModelSetting.to_dict()['top100Key']
-            if key == '1':
-                toptitle = '오늘 TOP100'
-            elif key == '2':
-                toptitle = '국내 급상승'
-            elif key == '3':
-                toptitle = '빌보드 K-POP'
-            elif key == '4':
-                toptitle = '해외 급상승'
-            elif key == '5':
-                toptitle = '빌보드 HOT100'
-            elif key == '6':
-                toptitle = 'VIBE 노래방 TOP100'
-            elif key == '7':
-                toptitle = '국내 발라드 TOP100'
-            elif key == '8':
-                toptitle = '국내 댄스 TOP100'
-            elif key == '9':
-                toptitle = '음악검색 TOP100'
+
+            toptitle = LogicDownload.getTop100Title(key)
             
             savePathByTOP100 = P.ModelSetting.to_dict()['savePathByTOP100']
             saveFileNameByTOP100 = P.ModelSetting.to_dict()['saveFileNameByTOP100']
@@ -676,16 +717,15 @@ class LogicDownload(LogicModuleBase):
         logger.debug(P.ModelSetting.to_dict()['ffmpegDownload'])
         logger.debug( path )
         logger.debug( os.path.isfile( path ) )
-
-        
         
         try:
 
             if os.path.isfile( path ) :
                 logger.debug(path)
                 logger.debug("이미 같은파일이 있음")
+                return False
             else:
-                
+                logger.debug( LogicDownload.session )
                 if LogicDownload.session is None :
                     naverId = P.ModelSetting.to_dict()['naverId']
                     naverPw = P.ModelSetting.to_dict()['naverPw']
@@ -696,60 +736,73 @@ class LogicDownload(LogicModuleBase):
                 if not os.path.isdir(os.path.split(path)[0]):
                     os.makedirs(os.path.split(path)[0])
                 
-                if P.ModelSetting.to_dict()['ffmpegDownload'] == "True":
-                    logger.debug("다운로드 시작 by ffmpeg" + trackId)
-                    
-                    resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&play.mediaSourceType=AAC_320_ENC&deviceId=VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
-                    # resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=df8afa3c-4b6f-43s4-9e2d-b0fb7b0f5657-20210719-VIBE_WEB&play.mediaSourceType=AAC_320_ENC', data=LogicDownload.data, headers=LogicDownload.headers)
-                    rj = resp.json()
-                    musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
-                    logger.debug( musicDownloadUrl )
-                    command = ['ffmpeg', '-y', '-i', str( musicDownloadUrl ), '-acodec', 'mp3', '-ab', '320k', 
-                                '-metadata', 'title='+trackTitle, '-metadata', 'artist='+artist , '-metadata', 'album='+albumTitle, '-metadata', 'track='+trackNumber, 
-                                '-metadata', 'album_artist='+artist, os.path.join(path)]
-                                # '"'++'"']
-                    
-                    output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
-                    output.communicate()
-                else:
-                    logger.debug("다운로드 시작 by curl" + trackId)
-                    resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
-                    # resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=df8afa3c-4b6f-43s4-9e2d-b0fb7b0f5657-20210719-VIBE_WEB', data=LogicDownload.data, headers=LogicDownload.headers)
-                    rj = resp.json()
-                    # logger.debug(rj)
-                    musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
-                    logger.debug(musicDownloadUrl)
-                    command = ['curl', str( musicDownloadUrl ), '--output', os.path.join(path)]
-                    output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
-                    output.communicate()
+
+                resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=VIBE_WEB&play.mediaSourceType=AAC_320')
+                rj = resp.json()
+                musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
+
+                command = ['ffmpeg', '-i', str( musicDownloadUrl ), '-acodec', 'mp3', '-ab', '320k', os.path.join(path_data, 'tmp',trackId+".mp3")]
+                # logger.debug(command)
+                output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
+                result = output.communicate()
+                # logger.debug(result)
                 
-                LogicDownload.setLyrics(trackId, os.path.join(path))
+                
                 if type != "track":
                     import time
                     delayTime = P.ModelSetting.to_dict()['delayTime']
                     time.sleep(int(delayTime))
+                    
         except Exception as e: 
             logger.error("다운로드 오류 trackId : " + trackId)
             logger.error("다운로드 오류 type: " + type)
             logger.error("다운로드 오류 resp.text: " + resp.text)
             logger.error(traceback.format_exc())
+            return False
+        
+        return trackId
 
     @staticmethod
-    def setLyrics(trackId, filePath):
+    def setMetadata(trackId):
 
         resp = requests.get('https://apis.naver.com/vibeWeb/musicapiweb/track/'+trackId+'/info')
-        
+        filePath = os.path.join(path_data, 'tmp',trackId+".mp3")
         if resp.status_code == 200 :
             result = LogicDownload.parse_xml(resp.text)
             xml = ET.fromstring(resp.text)
             hasLyric = xml[0][0][1].text
             lyric = ""
             if hasLyric == "Y":
-                lyric = xml[0][0][2].text
-                from mutagen.id3 import ID3, USLT
-                audio = ID3(filePath)
-                audio.add(USLT(text=lyric, lang="kor", desc=""))
-                audio.save()
+                cnt = 0
+                while cnt < 10:
+                    if os.path.isfile( filePath ):
+                        lyric = xml[0][0][2].text
+                        from mutagen.id3 import ID3, USLT
+
+                        try:
+                            audio = ID3(filePath)
+                            audio.add(USLT(text=lyric, lang="kor", desc=""))
+                            audio.save()
+                        except Exception as e:
+                            audio = ID3()
+                            audio.add(USLT(text=lyric, lang="kor", desc=""))
+                            audio.save(filePath)
+                        
+                        cnt = cnt + 10
+                    else:
+                        import time
+                        time.sleep(1)
+                    cnt = cnt + 1
+    
+    @staticmethod
+    def moveMusic(info):
+
+        trackId = info['trackId']
+        filePath = info['path']
+
+        if os.path.isfile( os.path.join(path_data, 'tmp',trackId+".mp3") ):
+            shutil.move(os.path.join(path_data, 'tmp',trackId+".mp3") , filePath)
+            
     @staticmethod
     def parse_xml(xml):
         return [dict([(j.tag, (j.text or list(filter(lambda l: l, [k.text for k in j.iter()])))) for j in i]) for i in ET.fromstring(xml)]
@@ -796,5 +849,83 @@ class LogicDownload(LogicModuleBase):
             return session
         else:
             logger.debug("로그인 실패")
-            logger.debug(doc)
+            # logger.debug(resp.text)
+            
+            if(resp.text.find("자동입력 방지문자")>-1):
+                data = {'type':'danger', 'msg':'자동입력 방지활성화 직접로그인 후 재시도 하세요.'}
+            else:
+                data = {'type':'danger', 'msg':'로그인 실패'}
+                    
+            socketio.emit('notify', data, namespace='/framework', broadcast=True)
             return None
+    
+    @staticmethod
+    def insertDownList(info):
+
+        try:
+            from .setting import ModelDownloadList    
+
+            id = ModelDownloadList.getNextId()
+
+            entity = ModelDownloadList()
+            entity.id = id
+            entity.downloadType = str(info['type'])
+            entity.downloadDetail = str(info['detail'])
+            entity.downalodCnt = info['cnt']
+            entity.downalodAllCnt = info['allCnt']
+            entity.downalodStartDate = datetime.now()
+            
+            db.session.add(entity)
+            db.session.commit()
+            return id
+        except Exception as e:
+            logger.error('Exception:%s', e)
+            logger.error(traceback.format_exc())
+    
+    @staticmethod
+    def updateDownList(info):
+
+        try:
+            from .setting import ModelDownloadList    
+            item = db.session.query(ModelDownloadList).filter_by(id=info['id']).with_for_update().first()
+            if item is not None:
+                for col in info.keys():
+                    if col == "downalodCnt":
+                        item.downalodCnt = info['downalodCnt']
+                    if col == "downalodEndDate":
+                        item.downalodEndDate = info['downalodEndDate']
+                    if col == "downalodStatus":
+                        item.downalodStatus = info['downalodStatus']
+                db.session.commit()
+            
+        except Exception as e:
+            logger.error('Exception:%s %s', e, key)
+            logger.error(traceback.format_exc())
+
+        except Exception as e:
+            logger.error(d)
+            logger.error('Exception:%s', e)
+            logger.error(traceback.format_exc())
+
+    @staticmethod
+    def getTop100Title(key):
+        if key == '1':
+            toptitle = '오늘 TOP100'
+        elif key == '2':
+            toptitle = '국내 급상승'
+        elif key == '3':
+            toptitle = '빌보드 K-POP'
+        elif key == '4':
+            toptitle = '해외 급상승'
+        elif key == '5':
+            toptitle = '빌보드 HOT100'
+        elif key == '6':
+            toptitle = 'VIBE 노래방 TOP100'
+        elif key == '7':
+            toptitle = '국내 발라드 TOP100'
+        elif key == '8':
+            toptitle = '국내 댄스 TOP100'
+        elif key == '9':
+            toptitle = '음악검색 TOP100'
+        return toptitle
+

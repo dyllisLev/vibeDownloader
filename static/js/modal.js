@@ -18,11 +18,12 @@ function downloadEventAdd(downloadType){
       data: {"trackId":trackId, "type":"track"},
       dataType: "json",
       success: function (data) {
-        if( data.ret == "success" ){
-          $.notify('<strong>' + data.content.response.result.track.trackTitle + ' 다운로드 완료</strong>', {type: 'success'});
-        }else{
-          $.notify('<strong>다운로드 실패</strong>', {type: 'danger'});
-        }
+        // alert("!");
+        // if( data.ret == "success" ){
+        //   $.notify('<strong>' + data.content.response.result.track.trackTitle + ' 다운로드 완료</strong>', {type: 'success'});
+        // }else{
+        //   $.notify('<strong>다운로드 실패</strong>', {type: 'danger'});
+        // }
       }
     });
   });

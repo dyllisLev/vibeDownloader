@@ -41,7 +41,7 @@
     <div class="row justify-content-center">
       <div class="col-8">
         <div class="alert alert-warning alert-dismissible fade show" role="alert">
-          <strong>ffmpeg 사용여부</strong></br>
+          <!-- <strong>ffmpeg 사용여부</strong></br>
           <hr style="width: 100%; margin:0px; background-color:#808080;" class="my-2">
           <div class="row">
             <div class="col">
@@ -55,7 +55,7 @@
               &nbsp;&nbsp;3. ffmpeg 대비 빠름.<br>
             </div>
           </div>
-          <hr style="width: 100%; margin:0px; background-color:#808080;" class="my-2">
+          <hr style="width: 100%; margin:0px; background-color:#808080;" class="my-2"> -->
           <strong>저장 경로, 파일 설정</strong></br>
           <hr style="width: 100%; margin:0px; background-color:#808080;" class="my-2">
           <div class="row">
@@ -144,7 +144,7 @@
       </div>
     </div>
     
-    {{ macros.setting_checkbox('ffmpegDownload', 'ffmpeg 사용여부', value=arg['ffmpegDownload'], desc='ffmpeg 사용여부') }}
+    <!-- {{ macros.setting_checkbox('ffmpegDownload', 'ffmpeg 사용여부', value=arg['ffmpegDownload'], desc='ffmpeg 사용여부') }} -->
     {{ macros.setting_input_text_and_buttons('savePath', '기본저장 경로', [['btn_add_path1', '경로추가']],value=arg['savePath'], desc=['저장 경로']) }}
     {{ macros.setting_input_text('saveFileName', '기본저장 파일명', value=arg['saveFileName'], desc=['기본저장 파일명']) }}
     {{ macros.setting_input_text_and_buttons('savePathByTOP100', 'TOP100 저장 경로', [['btn_add_path2', '경로추가']],value=arg['savePathByTOP100'], desc=['TOP100 저장 경로']) }}
