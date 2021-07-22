@@ -727,7 +727,7 @@ class LogicDownload(LogicModuleBase):
                 if type != "track":
                     import time
                     delayTime = P.ModelSetting.to_dict()['delayTime']
-                    time.sleep(delayTime)
+                    time.sleep(int(delayTime))
         except Exception as e: 
             logger.error("다운로드 오류 trackId : " + trackId)
             logger.error("다운로드 오류 type: " + type)
