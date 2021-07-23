@@ -1,9 +1,50 @@
 {% extends "base.html" %}
 {% block content %}
-
-<div>
-  
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <div class="row" style="padding-top: 10px; padding-bottom:10px; align-items: center;">
+                <div class="col-sm-3 set-left">
+                    <strong>경로</strong>
+                </div>
+                <div class="col-sm-9">
+                    <div class="input-group col-sm-9">
+                        <input id="rootPath" name="rootPath" type="text" class="form-control form-control-sm" value="/root/SJVA3/data/vibeDownloader">
+                        <div class="btn-group btn-group-sm flex-wrap mr-2" role="group" style="padding-left:5px; padding-top:0px">
+                            <button id="btn_add_path" class="btn btn-sm btn-outline-success">경로추가</button>
+                            <button id="btn_search" class="btn btn-sm btn-outline-success">조회</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-2">
+            <ul class="nav nav-pills folderList"></ul>
+        </div>
+        <div class="col w-100 fileList">
+            <div id="accordion">
+                
+                <div class="card">
+                    <div class="card-header" id="headingTwo">
+                        <h5 class="mb-0">
+                        <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            Dear OHMYGIRL - 01 - Dun Dun Dance - 오마이걸(OH MY GIRL).mp3
+                        </button>
+                        </h5>
+                    </div>
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+                        <div class="card-body">
+                        Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
 
 <div id="modalImport"></div>
 <script type="text/javascript">
@@ -12,11 +53,120 @@ var sub = "{{arg['sub'] }}";
 var user_auth = "{{ arg['gdrive_user_auth'] }}";
 var sa_auth = "{{ arg['gdrive_sa_auth'] }}";
 var use_av = "{{ arg['use_av'] }}";
-
 $(document).ready(function(){
-  
+    search_folder($('#rootPath').val());
+});
+$('#btn_add_path').click((evt) => {
+    let add_path = '/';    
+    m_select_local_file_modal("경로 선택", '/', 'true', function(result){
+      $('#rootPath').val(result);
+    });
+    return false;
 });
 
+$("body").on('click', '#btn_search', function(e){
+    e.preventDefault();
+    search_folder($('#rootPath').val());
+});
 
+function search_folder(path){
+
+    $.ajax({
+      url: '/' + package_name + '/ajax/'+sub+'/getFolderList',
+      type: "POST", 
+      cache: false,
+      data: {'path':path},
+      dataType: "json",
+      success: function (data) {
+          if( data.ret == "success" ){
+            viewFolderList(data);
+            viewFileList(data);
+          }
+      }
+    });
+}
+function viewFolderList(data){
+    
+    html  = '';
+    html += '<li class="nav-item border rounded w-100">';
+    html += '<a class="nav-link" href="#" data-path="'+getUpperPath(data.folderInfo.folder[0].fullPath, 2)+'">...</a>';
+    html += '</li>';
+    
+    for( i = 0 ; i < data.folderInfo.folder.length ; i++ ){
+        
+        folder = data.folderInfo.folder[i];
+        folderName = folder.fullPath.split("/")[folder.fullPath.split("/").length-1]
+        html += '<li class="nav-item border rounded w-100">';
+            
+        if( i == 0 ){
+            active = "";
+        }else{
+            active = "";
+        }
+        if( folder.subObj == "" ){
+            disabled = "disabled";
+            active = "";
+        }else{
+            disabled = "";
+        }
+        html += '<a class="nav-link '+active+' '+disabled+'" href="#" data-path="'+folder.fullPath+'">'+folderName+'</a>';
+        html += '</li>';
+    }
+
+    $('.folderList').html(html);
+    $("body").off('click', '.folderList .nav-link');
+    $("body").on('click', '.folderList .nav-link', function(e){
+        e.preventDefault();
+        if( !$(this).hasClass("disabled") ){
+            if( $(this).data("path") == "" ){
+                search_folder("/");
+            }else{
+                search_folder($(this).data("path"));
+            }
+        }else{
+            alert("마지막 폴더입니다.");
+        }
+    });
+    
+    $('#rootPath').val(getUpperPath(data.folderInfo.folder[0].fullPath, 1));
+
+}
+function getUpperPath(path, depth){
+    for( i = 0 ; i < depth ; i++){
+        path = path.substring(0, path.lastIndexOf('/'));
+    }
+    return path;
+}
+
+function viewFileList(data){
+    html  = '';
+
+    for( i = 0 ; i < data.folderInfo.file.length ; i++ ){
+        file = data.folderInfo.file[i];
+        html += '<div class="card">';
+        html += '    <div class="card-header" id="heading'+i+'">';
+        html += '        <h5 class="mb-0">';
+        
+        if( i > 0 ){
+            show = "";
+            collapsed = "collapsed";
+        }else{
+            show = "show";
+            collapsed = "";
+        }
+        html += '            <button class="btn btn-link '+collapsed+'" data-toggle="collapse" data-target="#collapse'+i+'" aria-expanded="true" aria-controls="collapse'+i+'">';
+        html += '                '+file.name;
+        html += '            </button>';
+        html += '        </h5>';
+        html += '    </div>';
+        html += '    <div id="collapse'+i+'" class="collapse '+show+'" aria-labelledby="heading'+i+'" data-parent="#accordion">';
+        html += '        <div class="card-body">';
+        html += '            Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven\'t heard of them accusamus labore sustainable VHS.';
+        html += '        </div>';
+        html += '    </div>';
+        html += '</div>';
+    }
+    $('#accordion').html(html);
+}
 </script>    
 {% endblock %}

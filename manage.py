@@ -93,17 +93,15 @@ class LogicManage(LogicModuleBase):
     def getFolderList(req):
 
         path = req['path']
-        logger.debug(path)
-        if path == '/' :
-            # path = P.ModelSetting.to_dict()['rootPath']
-            path = '/root/SJVA3'
-        logger.debug(path)
+        
         folderList = os.listdir(path)
-        folderInfo = {}
-        folderInfo.setdefault('folder')
-        folderInfo['folder'] = {}
-        folderInfo['folder'] = []
-        logger.debug(folderInfo)
+        from collections import defaultdict
+        folderInfo = defaultdict(list)
+        # folderInfo.setdefault('file')
+        # folderInfo.setdefault('folder')
+        # folderInfo['file'] = []
+        # folderInfo['folder'] = []
+        
         for obj in folderList:
             
             name = str(obj)
@@ -116,4 +114,26 @@ class LogicManage(LogicModuleBase):
                     if os.path.isdir(os.path.join(path,obj,subobj)):
                         subObj = "Y"                    
                 folderInfo['folder'].append({'name':name, 'isdir':isdir, 'subObj':subObj, 'fullPath': os.path.join(path,obj)})
+            else:
+                if obj.split(".")[-1] == "mp3":
+                    isdir = "Y"
+                    name = str(obj)
+                    logger.debug(obj)
+
+                    from mutagen.mp3 import MP3
+                    audio = MP3(os.path.join(path,obj))
+                    # logger.debug(audio.tags.keys())
+                    info = {}
+                    info['name'] = name
+                    info['isdir'] = isdir
+                    info['fullPath'] = os.path.join(path,obj)
+                    json_val = json.dumps(audio.tags)
+                    # for key in audio.tags.keys():
+                    #     if key != "APIC:":
+                    #         info[key] = audio.tags[key]
+                    #         logger.debug(key)
+                        # logger.debug(audio.tags[key])
+
+                    folderInfo['file'].append(info)
+
         return {'ret':'success', 'path':path, 'folderInfo':folderInfo}

@@ -66,12 +66,6 @@ class LogicSetting(LogicModuleBase):
         , 'rootPath' : os.path.join(path_data, package_name)
         #/////////////manage///////////////////
 
-
-
-        #/////////////manage///////////////////
-        , 'rootPath' : os.path.join(path_data, package_name)
-        #/////////////manage///////////////////
-
     }
 
     def __init__(self, P):
