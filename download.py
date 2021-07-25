@@ -742,7 +742,7 @@ class LogicDownload(LogicModuleBase):
                 musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
 
                 command = ['ffmpeg', '-i', str( musicDownloadUrl ), '-acodec', 'mp3', '-ab', '320k', os.path.join(path_data, 'tmp',trackId+".mp3")]
-                # logger.debug(command)
+                logger.debug(command)
                 output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
                 result = output.communicate()
                 # logger.debug(result)
