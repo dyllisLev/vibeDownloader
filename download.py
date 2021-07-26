@@ -739,6 +739,7 @@ class LogicDownload(LogicModuleBase):
 
                 resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=VIBE_WEB&play.mediaSourceType=AAC_320')
                 rj = resp.json()
+                logger.debug(rj)
                 musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
 
                 command = ['ffmpeg', '-i', str( musicDownloadUrl ), '-acodec', 'mp3', '-ab', '320k', os.path.join(path_data, 'tmp',trackId+".mp3")]
