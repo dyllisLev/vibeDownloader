@@ -776,9 +776,12 @@ class LogicDownload(LogicModuleBase):
                 cnt = 0
                 while cnt < 10:
                     if os.path.isfile( filePath ):
+
                         lyric = xml[0][0][2].text
                         from mutagen.id3 import ID3, USLT
-
+                        command = ['ffmpeg', '-i', filePath]
+                        output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
+                        logger.debug( output.communicate())
                         try:
                             audio = ID3(filePath)
                             audio.add(USLT(text=lyric, lang="kor", desc=""))
