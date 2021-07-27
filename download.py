@@ -206,13 +206,8 @@ class LogicDownload(LogicModuleBase):
     def musicPlay(req):
 
         trackId = req['trackId'];
-        naverId = P.ModelSetting.to_dict()['naverId']
-        naverPw = P.ModelSetting.to_dict()['naverPw']
-        
-        if LogicDownload.session is None :
-            LogicDownload.session = LogicDownload.naver_login(naverId, naverPw)
-            if LogicDownload.session is None :
-                return False
+
+        LogicDownload.session = LogicDownload.naver_login()
 
         resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&&deviceId=VIBE_WEB&play.mediaSourceType=AAC_320_ENC', data=LogicDownload.data, headers=LogicDownload.headers)
         rj = resp.json()
@@ -725,21 +720,15 @@ class LogicDownload(LogicModuleBase):
                 logger.debug("이미 같은파일이 있음")
                 return False
             else:
-                logger.debug( LogicDownload.session )
-                if LogicDownload.session is None :
-                    naverId = P.ModelSetting.to_dict()['naverId']
-                    naverPw = P.ModelSetting.to_dict()['naverPw']
-                    LogicDownload.session = LogicDownload.naver_login(naverId, naverPw)
-                    if LogicDownload.session is None :
-                        return False
-                        
+                
+                LogicDownload.session = LogicDownload.naver_login(naverId, naverPw)
+                
                 if not os.path.isdir(os.path.split(path)[0]):
                     os.makedirs(os.path.split(path)[0])
                 
-
                 resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=VIBE_WEB&play.mediaSourceType=AAC_320')
                 rj = resp.json()
-                logger.debug(rj)
+                # logger.debug(rj)
                 musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
 
                 command = ['ffmpeg', '-i', str( musicDownloadUrl ), '-acodec', 'mp3', '-ab', '320k', os.path.join(path_data, 'tmp',trackId+".mp3")]
@@ -782,7 +771,7 @@ class LogicDownload(LogicModuleBase):
                         from mutagen.id3 import ID3, USLT
                         command = ['ffmpeg', '-i', filePath]
                         output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
-                        logger.debug( output.communicate())
+                        # logger.debug( output.communicate())
                         try:
                             audio = ID3(filePath)
                             audio.add(USLT(text=lyric, lang="kor", desc=""))
@@ -826,42 +815,52 @@ class LogicDownload(LogicModuleBase):
         return Keyname, encpw
 
     @staticmethod
-    def naver_login(nid, npw):
-        encnm, encpw = LogicDownload.encrypt(nid, npw)
-        bvsd_uuid = uuid.uuid4()
-        o = '{"a":"' + str(bvsd_uuid) + '","b":"1.3.4","h":"1f","i":{"a":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Whale/2.7.100.20 Safari/537.36"}}'  
-        encData = lzstring.LZString.compressToEncodedURIComponent(o)
-        bvsd = '{"uuid":"'+ str(bvsd_uuid) + '","encData":"'+ encData +'"}'
-        session = requests.Session()
-        
-        LogicDownload.data = {
-            'enctp': '1',
-            'svctype': '0',
-            'encnm': encnm,
-            'locale' : 'ko_KR',
-            'url': 'www.naver.com',
-            'smart_level': '1',
-            'encpw': encpw,
-            'bvsd': bvsd
-        }
-        resp = session.post('https://nid.naver.com/nidlogin.login', data=LogicDownload.data, headers=LogicDownload.headers)
+    def naver_login():
 
-        from lxml.html import fromstring
-        doc  = fromstring(resp.text)
-        if(resp.text.find("location.replace")>-1):
-            logger.debug("로그인 성공")
-            return session
-        else:
-            logger.debug("로그인 실패")
-            # logger.debug(resp.text)
+        nid = P.ModelSetting.to_dict()['naverId']
+        npw = P.ModelSetting.to_dict()['naverPw']
+        
+        lastloginTime = P.ModelSetting.to_dict()['lastloginTime']
+        
+        if float(datetime.now().timestamp()) - float(lastloginTime) > 10800 or LogicDownload.session is None:
+            encnm, encpw = LogicDownload.encrypt(nid, npw)
+            bvsd_uuid = uuid.uuid4()
+            o = '{"a":"' + str(bvsd_uuid) + '","b":"1.3.4","h":"1f","i":{"a":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Whale/2.7.100.20 Safari/537.36"}}'  
+            encData = lzstring.LZString.compressToEncodedURIComponent(o)
+            bvsd = '{"uuid":"'+ str(bvsd_uuid) + '","encData":"'+ encData +'"}'
+            session = requests.Session()
             
-            if(resp.text.find("자동입력 방지문자")>-1):
-                data = {'type':'danger', 'msg':'자동입력 방지활성화 직접로그인 후 재시도 하세요.'}
+            LogicDownload.data = {
+                'enctp': '1',
+                'svctype': '0',
+                'encnm': encnm,
+                'locale' : 'ko_KR',
+                'url': 'www.naver.com',
+                'smart_level': '1',
+                'encpw': encpw,
+                'bvsd': bvsd
+            }
+            resp = session.post('https://nid.naver.com/nidlogin.login', data=LogicDownload.data, headers=LogicDownload.headers)
+
+            from lxml.html import fromstring
+            doc  = fromstring(resp.text)
+            if(resp.text.find("location.replace")>-1):
+                logger.debug("로그인 성공")
+                P.ModelSetting.set("lastloginTime", str(datetime.now().timestamp()))
+                return session
             else:
-                data = {'type':'danger', 'msg':'로그인 실패'}
-                    
-            socketio.emit('notify', data, namespace='/framework', broadcast=True)
-            return None
+                logger.debug("로그인 실패")
+                # logger.debug(resp.text)
+                
+                if(resp.text.find("자동입력 방지문자")>-1):
+                    data = {'type':'danger', 'msg':'자동입력 방지활성화 직접로그인 후 재시도 하세요.'}
+                else:
+                    data = {'type':'danger', 'msg':'로그인 실패'}
+                        
+                socketio.emit('notify', data, namespace='/framework', broadcast=True)
+                return None
+        else:
+            return LogicDownload.session
     
     @staticmethod
     def insertDownList(info):

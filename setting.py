@@ -58,7 +58,8 @@ class LogicSetting(LogicModuleBase):
         'top100Download7' : False,
         'top100Download8' : False,
         'top100Download9' : False,
-        'delayTime' : 3
+        'delayTime' : 3,
+        'lastloginTime' : 0
 
     }
 
