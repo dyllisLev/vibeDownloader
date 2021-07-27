@@ -127,7 +127,7 @@ class LogicManage(LogicModuleBase):
                     info['name'] = name
                     info['isdir'] = isdir
                     info['fullPath'] = os.path.join(path,obj)
-                    json_val = json.dumps(audio.tags)
+                    # json_val = json.dumps(audio.tags)
                     # for key in audio.tags.keys():
                     #     if key != "APIC:":
                     #         info[key] = audio.tags[key]
