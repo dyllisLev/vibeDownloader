@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 # third-party
 import requests
 # third-party
-from flask import request, render_template, jsonify, redirect
+from flask import request, render_template, jsonify, redirect, Response
 from sqlalchemy import or_, and_, func, not_, desc
 
 # sjva 공용
@@ -60,6 +60,8 @@ class LogicManage(LogicModuleBase):
                 ret = LogicManage.getFolderList(req.form)
             elif sub == 'musicDownloadById':
                 ret = LogicManage.musicDownloadById(req.form)
+            elif sub == 'musicPlay':
+                return LogicManage.musicPlay(req.form)
             
             return jsonify(ret)
 
@@ -102,24 +104,26 @@ class LogicManage(LogicModuleBase):
         # folderInfo['file'] = []
         # folderInfo['folder'] = []
         
+        cnt = 0
         for obj in folderList:
             
             name = str(obj)
             isdir = ''
             subObj = ''
+            
             if os.path.isdir(os.path.join(path,obj)):
                 isdir = "Y"
                 subPathList = os.listdir(os.path.join(path,obj))
+            
                 for subobj in os.listdir(os.path.join(path,obj)):
-                    if os.path.isdir(os.path.join(path,obj,subobj)):
-                        subObj = "Y"                    
+                    subObj = "Y"                    
+                    # if os.path.isdir(os.path.join(path,obj,subobj)):
                 folderInfo['folder'].append({'name':name, 'isdir':isdir, 'subObj':subObj, 'fullPath': os.path.join(path,obj)})
             else:
                 if obj.split(".")[-1] == "mp3":
                     isdir = "Y"
                     name = str(obj)
-                    logger.debug(obj)
-
+                    
                     command = ['ffmpeg', '-i', os.path.join(path,obj), '-hide_banner']
                     # logger.debug(command)
                     output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
@@ -130,7 +134,24 @@ class LogicManage(LogicModuleBase):
                     info['isdir'] = isdir
                     info['fullPath'] = os.path.join(path,obj)
                     info['metadata'] = result
+                    info['cnt'] = cnt
                     
-                    folderInfo['file'].append(info)
+                    #folderInfo['file'].append(info)
+                    socketio.emit('fileList', info, namespace='/framework', broadcast=True)
+                    cnt = cnt + 1
 
         return {'ret':'success', 'path':path, 'folderInfo':folderInfo}
+
+    @staticmethod
+    def musicPlay(req):
+
+        path = req['path'];
+        logger.debug(os.path.isfile(os.path.join(path)))
+        
+        def generate():
+            with open(os.path.join(path), "rb") as fwav:
+                data = fwav.read(1024)
+                while data:
+                    yield data
+                    data = fwav.read(1024)
+        return Response(generate(), mimetype="audio/mpeg3")

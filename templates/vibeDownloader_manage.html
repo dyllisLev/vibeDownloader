@@ -24,21 +24,8 @@
             <ul class="nav nav-pills folderList"></ul>
         </div>
         <div class="col w-100 fileList">
-            <div id="accordion">
-                
-                <div class="card">
-                    <div class="card-header" id="headingTwo">
-                        <h5 class="mb-0">
-                        <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                            Dear OHMYGIRL - 01 - Dun Dun Dance - 오마이걸(OH MY GIRL).mp3
-                        </button>
-                        </h5>
-                    </div>
-                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
-                        <div class="card-body">
-                        Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
-                        </div>
-                    </div>
+            <div style="overflow: auto;height: 800px;">
+                <div id="accordion">
                 </div>
             </div>
         </div>
@@ -46,14 +33,27 @@
 </div>
 
 
-<div id="modalImport"></div>
+<div class="audioPlay">
+    <video id="video"></video>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="{{ url_for('.static', filename='js/modal.js') }}?v={{arg['v'] }}"></script>
 <script type="text/javascript">
 var package_name = "{{arg['package_name'] }}";
 var sub = "{{arg['sub'] }}";
 var user_auth = "{{ arg['gdrive_user_auth'] }}";
 var sa_auth = "{{ arg['gdrive_sa_auth'] }}";
 var use_av = "{{ arg['use_av'] }}";
+var protocol = window.location.protocol;
 $(document).ready(function(){
+    var socket = io.connect(protocol + "//" + document.domain + ":" + location.port + "/framework");
+    //var socket = io.connect("http://" + document.domain + ":" + location.port + "/framework", {transports:['websocket']},  {'force new connection': true});
+    socket.on('fileList', function(data){
+        if( data.cnt == 0){
+            $('#accordion').html("");
+        }
+        viewFileList(data);
+    });
     search_folder($('#rootPath').val());
 });
 $('#btn_add_path').click((evt) => {
@@ -80,7 +80,6 @@ function search_folder(path){
       success: function (data) {
           if( data.ret == "success" ){
             viewFolderList(data);
-            viewFileList(data);
           }
       }
     });
@@ -89,28 +88,29 @@ function viewFolderList(data){
     
     html  = '';
     html += '<li class="nav-item border rounded w-100">';
-    html += '<a class="nav-link" href="#" data-path="'+getUpperPath(data.folderInfo.folder[0].fullPath, 2)+'">...</a>';
+    html += '<a class="nav-link" href="#" data-path="'+getUpperPath(data.path, 1)+'">...</a>';
     html += '</li>';
-    
-    for( i = 0 ; i < data.folderInfo.folder.length ; i++ ){
-        
-        folder = data.folderInfo.folder[i];
-        folderName = folder.fullPath.split("/")[folder.fullPath.split("/").length-1]
-        html += '<li class="nav-item border rounded w-100">';
+    if( data.folderInfo.folder != undefined ){
+        for( i = 0 ; i < data.folderInfo.folder.length ; i++ ){
             
-        if( i == 0 ){
-            active = "";
-        }else{
-            active = "";
+            folder = data.folderInfo.folder[i];
+            folderName = folder.fullPath.split("/")[folder.fullPath.split("/").length-1]
+            html += '<li class="nav-item border rounded w-100">';
+                
+            if( i == 0 ){
+                active = "";
+            }else{
+                active = "";
+            }
+            if( folder.subObj == "" ){
+                disabled = "disabled";
+                active = "";
+            }else{
+                disabled = "";
+            }
+            html += '<a class="nav-link '+active+' '+disabled+'" href="#" data-path="'+folder.fullPath+'">'+folderName+'</a>';
+            html += '</li>';
         }
-        if( folder.subObj == "" ){
-            disabled = "disabled";
-            active = "";
-        }else{
-            disabled = "";
-        }
-        html += '<a class="nav-link '+active+' '+disabled+'" href="#" data-path="'+folder.fullPath+'">'+folderName+'</a>';
-        html += '</li>';
     }
 
     $('.folderList').html(html);
@@ -118,6 +118,7 @@ function viewFolderList(data){
     $("body").on('click', '.folderList .nav-link', function(e){
         e.preventDefault();
         if( !$(this).hasClass("disabled") ){
+            $('#accordion').html("");
             if( $(this).data("path") == "" ){
                 search_folder("/");
             }else{
@@ -128,7 +129,7 @@ function viewFolderList(data){
         }
     });
     
-    $('#rootPath').val(getUpperPath(data.folderInfo.folder[0].fullPath, 1));
+    $('#rootPath').val(getUpperPath(data.path, 0));
 
 }
 function getUpperPath(path, depth){
@@ -140,39 +141,97 @@ function getUpperPath(path, depth){
 
 function viewFileList(data){
     html  = '';
-    if( data.folderInfo.file != undefined ){
-        for( i = 0 ; i < data.folderInfo.file.length ; i++ ){
-            file = data.folderInfo.file[i];
-            html += '<div class="card">';
-            html += '    <div class="card-header" id="heading'+i+'">';
-            html += '        <h5 class="mb-0">';
-            
-            if( i > 0 ){
-                show = "";
-                collapsed = "collapsed";
-            }else{
-                show = "show";
-                collapsed = "";
-            }
-            html += '            <button class="btn btn-link '+collapsed+'" data-toggle="collapse" data-target="#collapse'+i+'" aria-expanded="true" aria-controls="collapse'+i+'">';
-            html += '                '+file.name;
-            html += '            </button>';
-            html += '        </h5>';
-            html += '    </div>';
-            html += '    <div id="collapse'+i+'" class="collapse '+show+'" aria-labelledby="heading'+i+'" data-parent="#accordion">';
-            html += '        <div class="card-body">';
-            html += '        <div style="overflow: auto;height: 361px;">';
-
-            html += '          <span style="white-space: pre-wrap;">';
-            html += file.metadata[0];
-            html += '          </span>';
-            html += '        </div>';
-            html += '        </div>';
-            html += '    </div>';
-            html += '</div>';
-        }
+    file = data;
+    i = $('#accordion div.card').length;
+    html += '<div class="card">';
+    html += '    <div class="card-header" id="heading'+i+'">';
+    html += '        <h5 class="mb-0">';
+    
+    if( i > 0 ){
+        show = "";
+        collapsed = "collapsed";
+    }else{
+        show = "show";
+        collapsed = "";
     }
-    $('#accordion').html(html);
+    html += '            <button class="btn btn-link '+collapsed+'" >';
+    html += '                '+file.name;
+    html += '            </button>';
+    html += '        </h5>';
+    html += '    </div>';
+    html += '    <div id="collapse'+i+'" class="collapse '+show+'" aria-labelledby="heading'+i+'" data-parent="#accordion">';
+    html += '        <div class="card-body">';
+    html += '        <div style="overflow: auto;height: 361px;">';
+    html += '           <div class="row">';
+    btn_str = m_button('btn_download', '다운로드', [{'key':'path', 'value':data.fullPath}]);
+    btn_str += m_button('btn_play', '재생', [{'key':'path', 'value':data.fullPath}]);
+    tmp = m_button_group(btn_str);
+    html += m_col(3, tmp, "left");
+    html += '           </div>';
+    html += '          <span style="white-space: pre-wrap;">';
+    html += file.metadata[0];
+    html += '          </span>';
+    html += '        </div>';
+    html += '        </div>';
+    html += '    </div>';
+    html += '</div>';
+    
+    $('#accordion').append(html);
+
+    $("body").off('click', '#accordion .card-header');
+    $("body").on('click', '#accordion .card-header', function(e){
+        e.preventDefault();
+        $('#accordion div.show').removeClass("show");
+        $(this).next().addClass("show");
+    });
+
+
+    $("body").on('click', '#accordion #collapse'+i+' #btn_play', function(e){
+        e.preventDefault();
+        path = $(this).data("path");
+        btnObj = $(this);
+        url = protocol + "//" + document.domain + ":" + location.port + "/download_file"+path
+        
+        if( btnObj.text() == "재생"){
+            var videoSrc = url; // <- 테스트 URL 이므로 본인의 URL 작성
+            var video = document.getElementById('video');
+            video.src = videoSrc; // 동영상경로
+            video.addEventListener('play',function() {
+                video.play();
+            });
+            video.play();
+            // if(Hls.isSupported()) {
+            //     var hls = new Hls();
+            //     hls.loadSource(videoSrc); // 동영상경로
+            //     hls.attachMedia(video);
+            //     hls.on(Hls.Events.MANIFEST_PARSED,function() {
+            //         video.play();
+            //     });
+            // }else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                
+            // }
+
+            $('button[name=btn_play]').text("재생")
+            $('button[name=btn_play]').addClass("btn-outline-success");
+            $('button[name=btn_play]').removeClass("btn-outline-danger");
+            btnObj.text("정지");
+            btnObj.addClass("btn-outline-danger");
+            btnObj.removeClass("btn-outline-success");
+        }else{
+            fnPlayStop();
+        }
+        
+    
+    });
+    $("body").on('click', '#accordion #collapse'+i+' #btn_download', function(e){
+        e.preventDefault();
+        path = $(this).data("path");
+        btnObj = $(this);
+        url = protocol + "//" + document.domain + ":" + location.port + "/download_file"+path
+        window.open(url);
+        
+    
+    });
 }
 </script>    
 {% endblock %}
