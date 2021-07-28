@@ -59,7 +59,8 @@ class LogicDownload(LogicModuleBase):
     # 플러그인 로딩시 실행할 내용이 있으면 작성
     def plugin_load(self):
         # self.db_migration()
-        self.initialize()
+        # self.initialize()
+        P.logger.debug('plugin_load')
 
     def process_menu(self, sub, req):
         # 각 메뉴들이 호출될때 필요한 값들을 arg에 넘겨주어야함
