@@ -9,7 +9,7 @@
                 </div>
                 <div class="col-sm-9">
                     <div class="input-group col-sm-9">
-                        <input id="rootPath" name="rootPath" type="text" class="form-control form-control-sm" value="{{ arg['rootPath'] }}">
+                        <input id="rootPath" name="rootPath" type="text" class="form-control form-control-sm" value="/root/SJVA3/data/vibeDownloader">
                         <div class="btn-group btn-group-sm flex-wrap mr-2" role="group" style="padding-left:5px; padding-top:0px">
                             <button id="btn_add_path" class="btn btn-sm btn-outline-success">경로추가</button>
                             <button id="btn_search" class="btn btn-sm btn-outline-success">조회</button>
@@ -34,7 +34,6 @@
 
 
 <div class="audioPlay">
-    <video id="video"></video>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="{{ url_for('.static', filename='js/modal.js') }}?v={{arg['v'] }}"></script>
@@ -185,7 +184,7 @@ function viewFileList(data){
         $(this).next().addClass("show");
     });
 
-
+    $("body").off('click', '#accordion #collapse'+i+' #btn_play');
     $("body").on('click', '#accordion #collapse'+i+' #btn_play', function(e){
         e.preventDefault();
         path = $(this).data("path");
@@ -193,24 +192,20 @@ function viewFileList(data){
         url = protocol + "//" + document.domain + ":" + location.port + "/download_file"+path
         
         if( btnObj.text() == "재생"){
+
+            $('.audioPlay').html('<video id="video"></video>');
             var videoSrc = url; // <- 테스트 URL 이므로 본인의 URL 작성
             var video = document.getElementById('video');
             video.src = videoSrc; // 동영상경로
             video.addEventListener('play',function() {
                 video.play();
             });
+            
+            video.addEventListener('pause',function() {
+                video.pause();
+            });
             video.play();
-            // if(Hls.isSupported()) {
-            //     var hls = new Hls();
-            //     hls.loadSource(videoSrc); // 동영상경로
-            //     hls.attachMedia(video);
-            //     hls.on(Hls.Events.MANIFEST_PARSED,function() {
-            //         video.play();
-            //     });
-            // }else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                
-            // }
-
+            
             $('button[name=btn_play]').text("재생")
             $('button[name=btn_play]').addClass("btn-outline-success");
             $('button[name=btn_play]').removeClass("btn-outline-danger");
@@ -219,6 +214,8 @@ function viewFileList(data){
             btnObj.removeClass("btn-outline-success");
         }else{
             fnPlayStop();
+            $('.audioPlay').html("");
+            
         }
         
     
