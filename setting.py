@@ -60,8 +60,7 @@ class LogicSetting(LogicModuleBase):
         'top100Download9' : False,
         'delayTime' : 3,
         'lastloginTime' : 0
-
-
+        
 
         #/////////////manage///////////////////
         , 'rootPath' : os.path.join(path_data, package_name)
