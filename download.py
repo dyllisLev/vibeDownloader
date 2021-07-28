@@ -721,7 +721,7 @@ class LogicDownload(LogicModuleBase):
                 return False
             else:
                 
-                LogicDownload.session = LogicDownload.naver_login(naverId, naverPw)
+                LogicDownload.session = LogicDownload.naver_login()
                 
                 if not os.path.isdir(os.path.split(path)[0]):
                     os.makedirs(os.path.split(path)[0])
