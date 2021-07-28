@@ -140,31 +140,37 @@ function getUpperPath(path, depth){
 
 function viewFileList(data){
     html  = '';
+    if( data.folderInfo.file != undefined ){
+        for( i = 0 ; i < data.folderInfo.file.length ; i++ ){
+            file = data.folderInfo.file[i];
+            html += '<div class="card">';
+            html += '    <div class="card-header" id="heading'+i+'">';
+            html += '        <h5 class="mb-0">';
+            
+            if( i > 0 ){
+                show = "";
+                collapsed = "collapsed";
+            }else{
+                show = "show";
+                collapsed = "";
+            }
+            html += '            <button class="btn btn-link '+collapsed+'" data-toggle="collapse" data-target="#collapse'+i+'" aria-expanded="true" aria-controls="collapse'+i+'">';
+            html += '                '+file.name;
+            html += '            </button>';
+            html += '        </h5>';
+            html += '    </div>';
+            html += '    <div id="collapse'+i+'" class="collapse '+show+'" aria-labelledby="heading'+i+'" data-parent="#accordion">';
+            html += '        <div class="card-body">';
+            html += '        <div style="overflow: auto;height: 361px;">';
 
-    for( i = 0 ; i < data.folderInfo.file.length ; i++ ){
-        file = data.folderInfo.file[i];
-        html += '<div class="card">';
-        html += '    <div class="card-header" id="heading'+i+'">';
-        html += '        <h5 class="mb-0">';
-        
-        if( i > 0 ){
-            show = "";
-            collapsed = "collapsed";
-        }else{
-            show = "show";
-            collapsed = "";
+            html += '          <span style="white-space: pre-wrap;">';
+            html += file.metadata[0];
+            html += '          </span>';
+            html += '        </div>';
+            html += '        </div>';
+            html += '    </div>';
+            html += '</div>';
         }
-        html += '            <button class="btn btn-link '+collapsed+'" data-toggle="collapse" data-target="#collapse'+i+'" aria-expanded="true" aria-controls="collapse'+i+'">';
-        html += '                '+file.name;
-        html += '            </button>';
-        html += '        </h5>';
-        html += '    </div>';
-        html += '    <div id="collapse'+i+'" class="collapse '+show+'" aria-labelledby="heading'+i+'" data-parent="#accordion">';
-        html += '        <div class="card-body">';
-        html += '            Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven\'t heard of them accusamus labore sustainable VHS.';
-        html += '        </div>';
-        html += '    </div>';
-        html += '</div>';
     }
     $('#accordion').html(html);
 }

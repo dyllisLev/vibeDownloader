@@ -120,20 +120,17 @@ class LogicManage(LogicModuleBase):
                     name = str(obj)
                     logger.debug(obj)
 
-                    from mutagen.mp3 import MP3
-                    audio = MP3(os.path.join(path,obj))
-                    # logger.debug(audio.tags.keys())
+                    command = ['ffmpeg', '-i', os.path.join(path,obj), '-hide_banner']
+                    # logger.debug(command)
+                    output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
+                    result = output.communicate()
+                    
                     info = {}
                     info['name'] = name
                     info['isdir'] = isdir
                     info['fullPath'] = os.path.join(path,obj)
-                    # json_val = json.dumps(audio.tags)
-                    # for key in audio.tags.keys():
-                    #     if key != "APIC:":
-                    #         info[key] = audio.tags[key]
-                    #         logger.debug(key)
-                        # logger.debug(audio.tags[key])
-
+                    info['metadata'] = result
+                    
                     folderInfo['file'].append(info)
 
         return {'ret':'success', 'path':path, 'folderInfo':folderInfo}
