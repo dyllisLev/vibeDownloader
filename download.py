@@ -581,6 +581,9 @@ class LogicDownload(LogicModuleBase):
         albumTitle  = track['album']['albumTitle'].replace('/', '')
         trackNumber = track['trackNumber']
         trackNumber = str(trackNumber).rjust(2,"0")
+        discNumber  = track['discNumber']
+        discNumber  = str(discNumber).rjust(2,"0")
+
         trackTitle  = track['trackTitle'].replace('/', '')
         artist      = ''
 
@@ -611,12 +614,14 @@ class LogicDownload(LogicModuleBase):
             savePath_base = savePath_base.replace('%trackTitle%', trackTitle)
             savePath_base = savePath_base.replace('%artist%', artist)
             savePath_base = savePath_base.replace('%today%', today)
+            savePath_base = savePath_base.replace('%discNumber%', discNumber)
             
             saveFileName = saveFileName.replace('%albumTitle%', albumTitle)
             saveFileName = saveFileName.replace('%trackNumber%', trackNumber)
             saveFileName = saveFileName.replace('%trackTitle%', trackTitle)
             saveFileName = saveFileName.replace('%artist%', artist)
             saveFileName = saveFileName.replace('%today%', today)
+            saveFileName = saveFileName.replace('%discNumber%', discNumber)
             
             fileName = saveFileName+".mp3"
             savePath = savePath_base
@@ -629,12 +634,14 @@ class LogicDownload(LogicModuleBase):
             savePathByAlbum = savePathByAlbum.replace('%trackTitle%', trackTitle)
             savePathByAlbum = savePathByAlbum.replace('%artist%', artist)
             savePathByAlbum = savePathByAlbum.replace('%today%', today)
+            savePathByAlbum = savePathByAlbum.replace('%discNumber%', discNumber)
             
             saveFileNameByAlbum = saveFileNameByAlbum.replace('%albumTitle%', albumTitle)
             saveFileNameByAlbum = saveFileNameByAlbum.replace('%trackNumber%', trackNumber)
             saveFileNameByAlbum = saveFileNameByAlbum.replace('%trackTitle%', trackTitle)
             saveFileNameByAlbum = saveFileNameByAlbum.replace('%artist%', artist)
             saveFileNameByAlbum = saveFileNameByAlbum.replace('%today%', today)
+            saveFileNameByAlbum = saveFileNameByAlbum.replace('%discNumber%', discNumber)
             
             fileName = saveFileNameByAlbum+".mp3"
             savePath = savePathByAlbum
@@ -662,6 +669,7 @@ class LogicDownload(LogicModuleBase):
             savePathByTOP100 = savePathByTOP100.replace('%today%', today)
             savePathByTOP100 = savePathByTOP100.replace('%rank%', rank)
             savePathByTOP100 = savePathByTOP100.replace('%toptitle%', toptitle)
+            savePathByTOP100 = savePathByTOP100.replace('%discNumber%', discNumber)
             
             saveFileNameByTOP100 = saveFileNameByTOP100.replace('%albumTitle%', albumTitle)
             saveFileNameByTOP100 = saveFileNameByTOP100.replace('%trackNumber%', trackNumber)
@@ -670,6 +678,7 @@ class LogicDownload(LogicModuleBase):
             saveFileNameByTOP100 = saveFileNameByTOP100.replace('%today%', today)
             saveFileNameByTOP100 = saveFileNameByTOP100.replace('%rank%', rank)
             saveFileNameByTOP100 = saveFileNameByTOP100.replace('%toptitle%', toptitle)
+            saveFileNameByTOP100 = saveFileNameByTOP100.replace('%discNumber%', discNumber)
 
 
             fileName = saveFileNameByTOP100+".mp3"
