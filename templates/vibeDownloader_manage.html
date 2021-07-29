@@ -44,6 +44,7 @@ var user_auth = "{{ arg['gdrive_user_auth'] }}";
 var sa_auth = "{{ arg['gdrive_sa_auth'] }}";
 var use_av = "{{ arg['use_av'] }}";
 var protocol = window.location.protocol;
+var playView = null;
 $(document).ready(function(){
     var socket = io.connect(protocol + "//" + document.domain + ":" + location.port + "/framework");
     //var socket = io.connect("http://" + document.domain + ":" + location.port + "/framework", {transports:['websocket']},  {'force new connection': true});
@@ -164,6 +165,7 @@ function viewFileList(data){
     html += '           <div class="row">';
     btn_str = m_button('btn_download', '다운로드', [{'key':'path', 'value':data.fullPath}]);
     btn_str += m_button('btn_play', '재생', [{'key':'path', 'value':data.fullPath}]);
+    btn_str += '<div class="mp3Time"></div>';
     tmp = m_button_group(btn_str);
     html += m_col(3, tmp, "left");
     html += '           </div>';
@@ -187,6 +189,7 @@ function viewFileList(data){
     $("body").off('click', '#accordion #collapse'+i+' #btn_play');
     $("body").on('click', '#accordion #collapse'+i+' #btn_play', function(e){
         e.preventDefault();
+        
         path = $(this).data("path");
         btnObj = $(this);
         url = protocol + "//" + document.domain + ":" + location.port + "/download_file"+path
@@ -197,14 +200,12 @@ function viewFileList(data){
             var videoSrc = url; // <- 테스트 URL 이므로 본인의 URL 작성
             var video = document.getElementById('video');
             video.src = videoSrc; // 동영상경로
-            video.addEventListener('play',function() {
-                video.play();
-            });
             
-            video.addEventListener('pause',function() {
-                video.pause();
-            });
             video.play();
+            
+            //playView = setInterval(playTime($(this)), 1000);
+            
+            
             
             $('button[name=btn_play]').text("재생")
             $('button[name=btn_play]').addClass("btn-outline-success");
@@ -218,7 +219,7 @@ function viewFileList(data){
             
         }
         
-    
+        
     });
     $("body").on('click', '#accordion #collapse'+i+' #btn_download', function(e){
         e.preventDefault();
@@ -229,6 +230,21 @@ function viewFileList(data){
         
     
     });
+}
+function secToMin(seconds) {
+
+    var hour = parseInt(seconds/3600);
+    var min = parseInt((seconds%3600)/60);
+    var sec = Math.round(seconds%60);
+    
+    return min+":" + sec;
+
+}
+function playTime(obj){
+    
+    playView = setInterval(function(){
+        $(obj).next().html(secToMin($('#video').get(0).currentTime) + " / " + secToMin($('#video').get(0).duration));
+    },1000);
 }
 </script>    
 {% endblock %}
