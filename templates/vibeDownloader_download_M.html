@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block content %}
+<style type="text/css">
+  .img_thumb { 
+    width: 40px;
+    height: 40px;
+  }
+</style>
+<div class="pb-5">
+  <div class="input-group input-group-lg">
+    <input type="text" class="form-control button-search-input" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-lg">
+    <div class="input-group-prepend">
+      <button class="btn btn-outline-secondary button-search" type="button">검색</button>
+    </div>
+  </div>
+  <div class="pt-3">
+    <h5><strong>노래</strong></h5>
+  </div>
+  <div class="trackList">
+    <div style="overflow: auto;height: 652px;">
+      <table class="table table-striped table-lm" cellspacing="0" width="100%">
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+</div>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="{{ url_for('.static', filename='js/modal.js') }}?v={{arg['v'] }}"></script>
+<script type="text/javascript">
+var package_name = "{{arg['package_name'] }}";
+var sub = "{{arg['sub'] }}";
+var current_data = null;
+var current_page = 1;
+var formData = null;
+var protocol = window.location.protocol;
+$('body > nav.navbar').hide();
+$('#plugin_first_menu').hide();
+$('#main_container').css("margin-top","-60px");
+
+$(document).ready(function(){
+  
+  
+  $('.card-deck').addClass("pt-3");
+  // $(".button-search-input").val("백지영");
+  // request_search();
+  $('.trackList').prev().hide();
+
+  
+});
+
+
+$(".button-search-input").on("keyup",function(key){
+  if(key.keyCode==13) {
+    request_search();
+  }
+});
+$(".button-search").click("keyup",function(key){
+  request_search();
+});
+
+function request_search() {
+  
+  $.ajax({
+    url: '/' + package_name + '/ajax/'+sub+'/search',
+    type: "POST", 
+    cache: false,
+    data: {'keyword':$(".button-search-input").val()},
+    dataType: "json",
+    success: function (data) {
+      if (scroll == true) {
+        window.scrollTo(0,0);
+      }
+      if( data.ret == "success" ){
+        trackResult(data.trackInfo);
+      }
+    }
+  });
+}
+
+
+function trackResult(data, isAdd) {
+
+  
+  html = '';
+  if( data.trackTotalCount > 0 ){
+    viewSize = $('.trackList #btn_download').length;
+
+    cnt = data.tracks.track.length;
+    if( data.tracks.track.length == undefined ){
+      cnt = 1;
+    }
+
+    for( i = 0 ; i < cnt ; i++ ){
+      if( data.tracks.track.length == undefined ){
+        track = data.tracks.track;
+      }else{
+        track = data.tracks.track[i];
+      }
+      
+      html += '<tr>';
+      // html += '  <td>';
+      // html += '    <img src="'+track.album.imageUrl+'" style="max-width: 60px;">';
+      // html += '  </td>';
+      html += '  <td>'+track.trackTitle+'</td>';
+
+      tmp = "";
+      if( track.artists.artist[0] == undefined ){
+        artistName = track.artists.artist.artistName;
+        artistId = track.artists.artist.artistId;
+        tmp = '<a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView">'+ artistName + '</a>';
+      }else{
+        for( var j in track.artists.artist){
+          if( j > 0 ){
+            tmp += ", ";
+          }
+          artistName = track.artists.artist[j].artistName;
+          artistId = track.artists.artist[j].artistId;
+          tmp += '<a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView">'+ artistName + '</a>';
+        }
+      }
+      
+      html += '  <td>'+tmp+'</td>';
+
+      
+      html += '  <td><a href="#" alt = "'+track.album.albumId+'" class="alert-link text-dark albumView">'+track.album.albumTitle+'</a></td>';
+      html += '  <td>';
+      html += '    <div class="btn-group btn-group-sm flex-wrap mr-2" role="group">';
+      html += '      <button id="btn_download" name="btn_download" class="btn btn-sm btn-outline-success" data-trackid="'+track.trackId+'">다운로드</button>';
+      html += '    </div>';
+      html += '  </td>';
+      html += '</tr>';
+      viewSize++;
+    }
+    
+    if( data.trackTotalCount > viewSize){
+      html += '<tr>';
+      html += '  <td colspan="5">';
+      html += '  <div class="container">';
+      html += '   <div class="row justify-content-md-center">';
+      html += '     <div class="col-md-auto">';
+      html += '    <div class="btn-group btn-group-sm flex-wrap mr-2" role="group">';
+      html += '      <button id="btn_add_view_track" name="btn_add_view_track" class="btn btn-sm btn-outline-primary" data-row="'+viewSize+'">더보기</button>';
+      html += '    </div>';
+      html += '     </div>';
+      html += '   </div>';
+      html += '  </td>';
+      html += '</tr>';
+    }
+    
+    if( isAdd == "add" ){
+      $('.trackList tbody tr:last').remove();
+      html = $('.trackList tbody').html() + html;
+    }
+    
+    
+    $('.trackList tbody').html(html);
+    $('.trackList').prev().show();
+  }else{
+    $('.trackList tbody').html(html);
+    $('.trackList').prev().hide();
+  }
+
+  $("body").off('click', '.trackList #btn_download');
+  $("body").on('click', '.trackList #btn_download', function(e){
+      e.preventDefault();
+      var trackId = $(this).data('trackid');
+      
+      $.ajax({
+        url: '/' + package_name + '/ajax/'+sub+'/musicDownload',
+        type: "POST", 
+        cache: false,
+        data: {'trackId':trackId},
+        dataType: "json",
+        success: function (data) {
+          if( data.ret == "success" ){
+            path = data.path;
+            url = protocol + "//" + document.domain + ":" + location.port + "/vibeDownloader/musicFileDownload"+path
+            window.open(url);
+          }
+        }
+      });
+      
+  });
+
+}
+
+$("body").on('click', '#btn_add_view_track', function(e){
+    e.preventDefault();
+    
+    var start = $(this).data('row')+1;
+    
+    $.ajax({
+      url: '/' + package_name + '/ajax/'+sub+'/searchByTrack',
+      type: "POST", 
+      cache: false,
+      data: {'keyword':$(".button-search-input").val(),"start":start},
+      dataType: "json",
+      success: function (data) {
+        if( data.ret == "success" ){
+          trackResult(data.trackInfo, "add");
+        }
+      }
+    });
+});
+
+
+
+
+</script>    
+{% endblock %}

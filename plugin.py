@@ -78,8 +78,9 @@ def initialize():
         from .setting import LogicSetting
         from .download import LogicDownload
         from .manage import LogicManage
+        from .downloadM import LogicDownloadM
         
-        P.module_list = [LogicSetting(P), LogicDownload(P), LogicManage(P)]
+        P.module_list = [LogicSetting(P), LogicDownload(P), LogicManage(P), LogicDownloadM(P)]
 
         P.logic = Logic(P)
         default_route(P)
