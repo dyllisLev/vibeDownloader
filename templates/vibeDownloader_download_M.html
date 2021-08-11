@@ -66,7 +66,7 @@ function request_search() {
     url: '/' + package_name + '/api/'+sub+'/search',
     type: "POST", 
     cache: false,
-    data: {'keyword':$(".button-search-input").val(),'apikey':'WZ1SXM48N4'},
+    data: {'keyword':$(".button-search-input").val()},
     dataType: "json",
     success: function (data) {
       if (scroll == true) {
