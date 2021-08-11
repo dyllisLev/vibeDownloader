@@ -110,6 +110,7 @@ class LogicDownloadM(LogicModuleBase):
             
             info = LogicDownload.getDownloadFilePath(trackInfo['response']['result']['track'], type="track")
             path = "/root/SJVA3/data/tmp/"+trackId+".mp3"
+            info['path'] = path
             filePath = "/root/SJVA3/data/tmp/"+info['trackTitle']+"_"+info['artist']+".mp3"
             if os.path.isfile( path ) :
                 logger.debug("파일 삭제")
