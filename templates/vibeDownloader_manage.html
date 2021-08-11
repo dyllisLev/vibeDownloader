@@ -221,6 +221,7 @@ function viewFileList(data){
         
         
     });
+    $("body").off('click', '#accordion #collapse'+i+' #btn_download');
     $("body").on('click', '#accordion #collapse'+i+' #btn_download', function(e){
         e.preventDefault();
         path = $(this).data("path");
