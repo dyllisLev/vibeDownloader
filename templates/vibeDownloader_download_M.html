@@ -63,10 +63,10 @@ $(".button-search").click("keyup",function(key){
 function request_search() {
   
   $.ajax({
-    url: '/' + package_name + '/ajax/'+sub+'/search',
+    url: '/' + package_name + '/api/'+sub+'/search',
     type: "POST", 
     cache: false,
-    data: {'keyword':$(".button-search-input").val()},
+    data: {'keyword':$(".button-search-input").val(),'apikey':'WZ1SXM48N4'},
     dataType: "json",
     success: function (data) {
       if (scroll == true) {
@@ -168,7 +168,7 @@ function trackResult(data, isAdd) {
       var trackId = $(this).data('trackid');
       
       $.ajax({
-        url: '/' + package_name + '/ajax/'+sub+'/musicDownload',
+        url: '/' + package_name + '/api/'+sub+'/musicDownload',
         type: "POST", 
         cache: false,
         data: {'trackId':trackId},
@@ -192,7 +192,7 @@ $("body").on('click', '#btn_add_view_track', function(e){
     var start = $(this).data('row')+1;
     
     $.ajax({
-      url: '/' + package_name + '/ajax/'+sub+'/searchByTrack',
+      url: '/' + package_name + '/api/'+sub+'/searchByTrack',
       type: "POST", 
       cache: false,
       data: {'keyword':$(".button-search-input").val(),"start":start},

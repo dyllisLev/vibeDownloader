@@ -75,6 +75,26 @@ class LogicDownloadM(LogicModuleBase):
             logger.error('Exception:%s', e)
             logger.error(traceback.format_exc())
             return jsonify({'ret':'exception', 'msg':str(e)})
+    
+    @P.blueprint.route('/api/<sub>', methods=['GET', 'POST'])    
+    def process_api(self, sub, req):
+        try:
+            ret = {'ret':'success', 'data':[]}
+            
+            if sub == 'search':
+                logger.debug(req.form)
+                ret = LogicDownload.search(req.form)
+            elif sub == 'searchByTrack':
+                ret = LogicDownload.searchByTrack(req.form)                
+            elif sub == 'musicDownload':
+                ret = LogicDownloadM.musicDownload(req.form)
+            
+            return jsonify(ret)
+
+        except Exception as e: 
+            logger.error('Exception:%s', e)
+            logger.error(traceback.format_exc())
+            return jsonify({'ret':'exception', 'msg':str(e)})
     def musicDownload(req):
         logger.debug( req )
 
