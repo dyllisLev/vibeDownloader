@@ -53,6 +53,7 @@ class LogicDownload(LogicModuleBase):
     # deviceId = LogicDownload.getDeviceId()
     data = None
     session = None
+    deviceId = None
     
     def __init__(self, P):
         super(LogicDownload, self).__init__(P, 'TOP100') # 해당모듈의 기본 sub
@@ -738,7 +739,7 @@ class LogicDownload(LogicModuleBase):
                 if not os.path.isdir(os.path.split(path)[0]):
                     os.makedirs(os.path.split(path)[0])
                 
-                resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=VIBE_WEB&play.mediaSourceType=AAC_320_ENC')
+                resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId='+LogicDownload.deviceId+'&play.mediaSourceType=AAC_320_ENC')
                 rj = resp.json()
                 # logger.debug(rj)
                 musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
@@ -905,6 +906,18 @@ class LogicDownload(LogicModuleBase):
             if(resp.text.find("location.replace")>-1):
                 logger.debug("로그인 성공")
                 P.ModelSetting.set("lastloginTime", str(datetime.now().timestamp()))
+                
+                
+                resp2 = requests.get('https://apis.naver.com/nmwebplayer/musicapiweb/device/VIBE_WEB/deviceId')
+                logger.debug( resp2 )
+                if resp2.status_code == 200 :
+                    dictionary = xmltodict.parse(resp2.text)
+                    deviceInfo = json.loads(json.dumps(dictionary))['response']['result']
+                    logger.debug(deviceInfo)
+                    logger.debug('============')
+                    logger.debug(deviceInfo['deviceIdInfo']['hashedDeviceId'])
+                    LogicDownload.deviceId = deviceInfo['deviceIdInfo']['hashedDeviceId']
+                
                 return session
             else:
                 logger.debug("로그인 실패")
