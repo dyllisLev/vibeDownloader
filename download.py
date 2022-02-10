@@ -19,6 +19,8 @@ import xmltodict, json, rsa, uuid, lzstring, subprocess
 
 import xml.etree.ElementTree as ET
 
+from mutagen.id3 import ID3, USLT, TALB, TDRC, TIT2, TPE1, TPE2, TPOS, TRCK, USLT, TXXX, APIC
+
 # 패키지
 from .plugin import P
 logger = P.logger
@@ -736,7 +738,7 @@ class LogicDownload(LogicModuleBase):
                 if not os.path.isdir(os.path.split(path)[0]):
                     os.makedirs(os.path.split(path)[0])
                 
-                resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=VIBE_WEB&play.mediaSourceType=AAC_320')
+                resp = LogicDownload.session.post('https://apis.naver.com/nmwebplayer/music/stplay_trackStPlay_NO_HMAC?play.trackId='+trackId+'&deviceType=VIBE_WEB&deviceId=VIBE_WEB&play.mediaSourceType=AAC_320_ENC')
                 rj = resp.json()
                 # logger.debug(rj)
                 musicDownloadUrl = rj["moduleInfo"]["hlsManifestUrl"]
@@ -763,6 +765,16 @@ class LogicDownload(LogicModuleBase):
         return trackId
 
     @staticmethod
+    def getTrackMetadata(trackId):
+        resp = requests.get('https://apis.naver.com/vibeWeb/musicapiweb/track/'+trackId)
+        trackInfo = None
+        if resp.status_code == 200 :
+            trackInfo = json.loads(json.dumps(xmltodict.parse(resp.text)))
+            trackInfo = trackInfo['response']['result']
+            trackInfo = LogicDownload.getTrackInfo(trackInfo)
+        return trackInfo
+
+    @staticmethod
     def setMetadata(trackId):
 
         resp = requests.get('https://apis.naver.com/vibeWeb/musicapiweb/track/'+trackId+'/info')
@@ -778,7 +790,6 @@ class LogicDownload(LogicModuleBase):
                     if os.path.isfile( filePath ):
 
                         lyric = xml[0][0][2].text
-                        from mutagen.id3 import ID3, USLT
                         command = ['ffmpeg', '-i', filePath]
                         output = subprocess.Popen(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding='utf-8')
                         # logger.debug( output.communicate())
@@ -796,13 +807,50 @@ class LogicDownload(LogicModuleBase):
                         import time
                         time.sleep(1)
                     cnt = cnt + 1
+        
+        trackInfo = LogicDownload.getTrackMetadata(trackId)
+        if trackInfo != None:
+            logger.debug( trackInfo )
+            logger.debug( trackInfo['imageUrl'] )
+            try:
+                audio = ID3(filePath)
+                audio.add(TALB(text=trackInfo['albumTitle'], lang="kor", desc=""))
+                # audio.add(TCON(text=trackInfo['genreNames'], lang="kor", desc=""))
+                audio.add(TDRC(text=[trackInfo['releaseDate']]))
+                audio.add(TIT2(text=trackInfo['trackTitle'], lang="kor", desc=""))
+                audio.add(TPE1(text=trackInfo['artist'], lang="kor", desc=""))
+                audio.add(TPE2(text=trackInfo['artist'], lang="kor", desc=""))
+                audio.add(TPOS(text=trackInfo['discNumber'], lang="kor", desc=""))
+                audio.add(TRCK(text=trackInfo['trackNumber'], lang="kor", desc=""))
+                audio.add(USLT(text=lyric, lang="kor", desc=""))
+                audio.add(TXXX(encoding=3, desc=u'VIBE', text=str(trackInfo['vibe'])))
+                audio.add(TXXX(encoding=3, desc=u'VIBE_TRACKID', text=str(trackId)))
+                audio.add(APIC(encoding=3, mime='image/png', type=3, desc='cover',data=requests.get(trackInfo['imageUrl'], stream=True,headers=headers).raw.read()))
+                audio.save()
+            except Exception as e:
+                audio = ID3()
+                audio.add(TALB(text=trackInfo['albumTitle'], lang="kor", desc=""))
+                # audio.add(TCON(text=trackInfo['genreNames'], lang="kor", desc=""))
+                audio.add(TDRC(text=[trackInfo['releaseDate']]))
+                audio.add(TIT2(text=trackInfo['trackTitle'], lang="kor", desc=""))
+                audio.add(TPE1(text=trackInfo['artist'], lang="kor", desc=""))
+                audio.add(TPE2(text=trackInfo['artist'], lang="kor", desc=""))
+                audio.add(TPOS(text=trackInfo['discNumber'], lang="kor", desc=""))
+                audio.add(TRCK(text=trackInfo['trackNumber'], lang="kor", desc=""))
+                audio.add(USLT(text=lyric, lang="kor", desc=""))
+                audio.add(TXXX(encoding=3, desc=u'VIBE', text=str(trackInfo['vibe'])))
+                audio.add(TXXX(encoding=3, desc=u'VIBE_TRACKID', text=str(trackId)))
+                audio.add(APIC(encoding=3, mime='image/png', type=3, desc='cover',data=requests.get(trackInfo['imageUrl'], stream=True,headers=headers).raw.read()))
+                audio.save(filePath)
+            # track.append({'trackTitle': trackInfo['trackTitle'], 'albumTitle': albumTitle, 'artist': artist, 'releaseDate': releaseDate})
+        
     
     @staticmethod
     def moveMusic(info):
 
         trackId = info['trackId']
         filePath = info['path']
-
+        logger.debug( "이동 " + filePath )
         if os.path.isfile( os.path.join(path_data, 'tmp',trackId+".mp3") ):
             shutil.move(os.path.join(path_data, 'tmp',trackId+".mp3") , filePath)
             
@@ -942,3 +990,30 @@ class LogicDownload(LogicModuleBase):
             toptitle = '음악검색 TOP100'
         return toptitle
 
+    def getTrackInfo(info):
+        track = None
+        trackInfo = None
+        # logger.debug(info)
+        trackInfo = info['track']
+        # print( trackInfo )
+        albumTitle  = trackInfo['album']['albumTitle'].replace('/', '')
+        releaseDate = trackInfo['album']['releaseDate']
+        if trackInfo['artistTotalCount'] == "1" :
+            artist = trackInfo['artists']['artist']['artistName']
+        else:
+            for artistTmp in trackInfo['artists']['artist']:
+                if artist != '' :
+                    artist = artist + ", "
+                artist = artist + artistTmp['artistName']
+        
+        # genreNames = trackInfo['genreNames']
+        discNumber = trackInfo['discNumber']
+        trackNumber = trackInfo['trackNumber']
+        imageUrl = trackInfo['album']['imageUrl']
+        track = {'trackTitle': trackInfo['trackTitle'], 'albumTitle': albumTitle, 'artist': artist, 'releaseDate': releaseDate, 
+                #  'genreNames': genreNames, 
+                 'discNumber': discNumber, 'trackNumber': trackNumber, 'imageUrl': imageUrl,
+                 'vibe': trackInfo
+                 }
+
+        return track
