@@ -1009,6 +1009,7 @@ class LogicDownload(LogicModuleBase):
         # logger.debug(info)
         trackInfo = info['track']
         # print( trackInfo )
+        artist = ''
         albumTitle  = trackInfo['album']['albumTitle'].replace('/', '')
         releaseDate = trackInfo['album']['releaseDate']
         if trackInfo['artistTotalCount'] == "1" :
