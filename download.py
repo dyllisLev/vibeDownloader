@@ -209,7 +209,7 @@ class LogicDownload(LogicModuleBase):
     @staticmethod
     def musicPlay(req):
 
-        trackId = req['trackId'];
+        trackId = req['trackId']
 
         LogicDownload.session = LogicDownload.naver_login()
 
@@ -375,11 +375,16 @@ class LogicDownload(LogicModuleBase):
         trackInfo = None
         result = False
         
-        resp = requests.get('https://apis.naver.com/vibeWeb/musicapiweb/track/'+trackId)
+        LogicDownload.session = LogicDownload.naver_login()
+        resp = LogicDownload.session.get('https://apis.naver.com/vibeWeb/musicapiweb/track/'+trackId)
+        #resp = requests.get('https://apis.naver.com/vibeWeb/musicapiweb/track/'+trackId)
+        logger.debug(resp)
+        logger.debug(resp.status_code)
+
         if resp.status_code == 200 :
             dictionary = xmltodict.parse(resp.text)
             trackInfo = json.loads(json.dumps(dictionary))
-
+            # logger.debug( trackInfo )
             data = {'type':'success', 'msg':trackInfo['response']['result']['track']['trackTitle'] + ' 다운로드 시작.'}
             socketio.emit('notify', data, namespace='/framework', broadcast=True)
             
@@ -767,7 +772,8 @@ class LogicDownload(LogicModuleBase):
 
     @staticmethod
     def getTrackMetadata(trackId):
-        resp = requests.get('https://apis.naver.com/vibeWeb/musicapiweb/track/'+trackId)
+        LogicDownload.session = LogicDownload.naver_login()
+        resp = LogicDownload.session.get('https://apis.naver.com/vibeWeb/musicapiweb/track/'+trackId)
         trackInfo = None
         if resp.status_code == 200 :
             trackInfo = json.loads(json.dumps(xmltodict.parse(resp.text)))
@@ -1006,7 +1012,7 @@ class LogicDownload(LogicModuleBase):
     def getTrackInfo(info):
         track = None
         trackInfo = None
-        # logger.debug(info)
+        logger.debug(info)
         trackInfo = info['track']
         # print( trackInfo )
         artist = ''
