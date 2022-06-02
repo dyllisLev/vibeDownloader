@@ -594,14 +594,16 @@ class LogicDownload(LogicModuleBase):
 
         trackTitle  = track['trackTitle'].replace('/', '')
         artist      = ''
-
-        if track['artistTotalCount'] == "1" :
+        try:
+            if track['artistTotalCount'] == "1" :
+                artist = track['artists']['artist']['artistName']
+            else:
+                for artistTmp in track['artists']['artist']:
+                    if artist != '' :
+                        artist = artist + ", "
+                    artist = artist + artistTmp['artistName']
+        except KeyError:
             artist = track['artists']['artist']['artistName']
-        else:
-            for artistTmp in track['artists']['artist']:
-                if artist != '' :
-                    artist = artist + ", "
-                artist = artist + artistTmp['artistName']
         
         artist = artist.replace('/', '')
         
