@@ -25,7 +25,7 @@ class P(object):
     menu = {
         'main' : [package_name, u'VIBE 다운로드'],
         'sub' : [
-            ['setting', u'설정'],['download', u'다운로드'],['manage', u'관리'], ['manual', u'매뉴얼'] ,['log', u'로그']
+            ['setting', u'설정'],['download', u'다운로드'],['melon', u'멜론'], ['manual', u'매뉴얼'] ,['log', u'로그']
         ],
         'category' : 'service',
         'sub2' : {
@@ -79,8 +79,9 @@ def initialize():
         from .download import LogicDownload
         from .manage import LogicManage
         from .downloadM import LogicDownloadM
+        from .melon import LogicMelon
         
-        P.module_list = [LogicSetting(P), LogicDownload(P), LogicManage(P), LogicDownloadM(P)]
+        P.module_list = [LogicSetting(P), LogicDownload(P), LogicManage(P), LogicDownloadM(P), LogicMelon(P)]
 
         P.logic = Logic(P)
         default_route(P)

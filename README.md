@@ -51,3 +51,6 @@
     + 기존 스케쥴 및 전체 다운로드시 간혹 데이터를 제대로 못받아오는 현상이 있어 다운로드시 3초의 지연시간을 주었습니다.  
     해당항목을 설정으로 빼서 개인의 설정에 맞게 지연시킬수 있습니다.
 
+from lib_metadata import SiteMelon
+        # SiteMelon.base_search()
+        logger.debug(SiteMelon.search_artist('아이유', None))

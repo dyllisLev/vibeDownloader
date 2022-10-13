@@ -9,6 +9,7 @@
     {{ macros.m_tab_head_start() }}
       {{ macros.m_tab_head2('normal', '일반', true) }}
       {{ macros.m_tab_head2('auto', '자동', false) }}
+      {{ macros.m_tab_head2('melon', '멜론', false) }}
     {{ macros.m_tab_head_end() }}
   </nav>
   <form id='setting' name='setting'>
@@ -206,6 +207,12 @@
     {{ macros.setting_checkbox('newAlbumDownload3', '최신앨범[모든]', value=arg['newAlbumDownload3'], desc='최신앨범[모든]') }}
     {{ macros.setting_checkbox('auto_start', '시작시 자동실행', value=arg['auto_start'], desc='On : 시작시 자동으로 스케쥴러에 등록됩니다.') }}
     {{ macros.m_tab_content_end() }}
+    {{ macros.m_tab_content_start('melon', false) }}
+      {{ macros.setting_input_text_and_buttons('melonPath', '경로', [['btn_add_path5', '경로추가']],value=arg['melonPath'], desc=['경로']) }}
+      {{ macros.setting_input_text('maxCost', '전체매칭점수', value=arg['maxCost'], desc=['가수, 제목, 앨범 매칭의 총 점수 기준입니다.','총 점수 300으로 해당 설정 점수로 매칭을 판단합니다.']) }}
+      {{ macros.setting_input_text('singleCost', '단독매칭점수', value=arg['singleCost'], desc=['가수, 제목, 앨범 각각의 매칭점수 입니다.','각 점수 100으로 해당 설정 점수로 매칭을 판단합니다.','전체매칭점수와 단독매칭점수 두 조건의 AND 조건으로 판단합니다.']) }}
+    {{ macros.m_tab_content_end() }}
+   
   </div> <!--전체-->
 </form>
 <div id="modalImport">
@@ -248,6 +255,13 @@ $('#btn_add_path4').click((evt) => {
     let add_path = '/';    
     m_select_local_file_modal("경로 선택", '/', 'true', function(result){
       $('#savePathByArtist').val(result);
+    });
+    return false;
+});
+$('#btn_add_path5').click((evt) => {
+    let add_path = '/';    
+    m_select_local_file_modal("경로 선택", '/', 'true', function(result){
+      $('#managePath').val(result);
     });
     return false;
 });

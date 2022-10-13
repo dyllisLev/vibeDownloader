@@ -30,7 +30,7 @@ ModelSetting = P.ModelSetting
 class LogicManage(LogicModuleBase):
     
     data = None
-    session = None
+    session = None 
     
     def __init__(self, P):
         super(LogicManage, self).__init__(P, 'manage') # 해당모듈의 기본 sub
@@ -48,6 +48,8 @@ class LogicManage(LogicModuleBase):
         P.logger.debug('sub:%s', sub)
         import random
         arg['v'] = random.random()
+
+        
         P.logger.debug('{package_name}_{sub}.html'.format(package_name=P.package_name, module_name=self.name, sub=sub))
         return render_template('{package_name}_{sub}.html'.format(package_name=P.package_name, module_name=self.name, sub=sub), arg=arg)
 
