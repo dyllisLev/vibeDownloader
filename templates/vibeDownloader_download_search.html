@@ -253,17 +253,17 @@ function albumResult(data, isAdd) {
       html += '      <h5 class="card-title"><a href="#" alt = "'+album.albumId+'" class="alert-link text-dark albumView">'+album.albumTitle+'</a></h5>';
       
       tmp = "";
-      if( album.artists.artist[0] == undefined ){
-        artistName = album.artists.artist.artistName;
-        artistId = album.artists.artist.artistId;
+      if( album.artists.artists[0] == undefined ){
+        artistName = album.artists.artists.artistName;
+        artistId = album.artists.artists.artistId;
         tmp = '<a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView">'+ artistName + '</a>';
       }else{
-        for( var j in album.artists.artist){
+        for( var j in album.artists.artists){
           if( j > 0 ){
             tmp += ", ";
           }
-          artistName = album.artists.artist[j].artistName;
-          artistId = album.artists.artist[j].artistId;
+          artistName = album.artists.artists[j].artistName;
+          artistId = album.artists.artists[j].artistId;
           tmp += '<a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView">'+ artistName + '</a>';
         }
       }
