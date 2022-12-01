@@ -153,17 +153,17 @@ function getAlbumModalHtml(data){
   albumModalHtml += '            <div class="col-md-8 ">';
   albumModalHtml += '              <div class="row">';
 
-  if( album.artists.artist[0] == undefined ){
-    artistName = album.artists.artist.artistName;
-    artistId = album.artists.artist.artistId;
+  if( album.artists.artists[0] == undefined ){
+    artistName = album.artists.artists.artistName;
+    artistId = album.artists.artists.artistId;
     albumModalHtml += '                <a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView"><p class="text-left">'+artistName+'</p></a>';
   }else{
-    for( var j in album.artists.artist){
+    for( var j in album.artists.artists){
       if( j > 0 ){
         albumModalHtml += ", ";
       }
-      artistName = album.artists.artist[j].artistName;
-      artistId = album.artists.artist[j].artistId;
+      artistName = album.artists.artists[j].artistName;
+      artistId = album.artists.artists[j].artistId;
       albumModalHtml += '                <a href="#" alt = "'+artistId+'" class="alert-link text-dark artistView"><p class="text-left">'+artistName+'</p></a>';
     }
   }
