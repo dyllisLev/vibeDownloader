@@ -318,7 +318,8 @@ class LogicDownload(LogicModuleBase):
             dictionary = xmltodict.parse(resp.text)
             albumTrack = json.dumps(dictionary) 
 
-            
+        logger.debug( albumInfo )
+        logger.debug( albumTrack )
         return {'ret':'success', 'albumInfo':json.loads(albumInfo), 'albumTracks':json.loads(albumTrack)}
     
     @staticmethod
@@ -594,15 +595,17 @@ class LogicDownload(LogicModuleBase):
 
         trackTitle  = track['trackTitle'].replace('/', '')
         artist      = ''
+        
         try:
-            if track['artistTotalCount'] == "1" :
-                artist = track['artists']['artist']['artistName']
-            else:
-                for artistTmp in track['artists']['artist']:
-                    if artist != '' :
-                        artist = artist + ", "
-                    artist = artist + artistTmp['artistName']
+
+            for artistTmp in track['artists']['artist']:
+                if artist != '' :
+                    artist = artist + ", "
+                artist = artist + artistTmp['artistName']
+
         except KeyError:
+            artist = track['artists']['artist']['artistName']
+        except TypeError:
             artist = track['artists']['artist']['artistName']
         
         artist = artist.replace('/', '')
@@ -1014,19 +1017,24 @@ class LogicDownload(LogicModuleBase):
     def getTrackInfo(info):
         track = None
         trackInfo = None
-        logger.debug(info)
+        # logger.debug(info)
         trackInfo = info['track']
         # print( trackInfo )
         artist = ''
         albumTitle  = trackInfo['album']['albumTitle'].replace('/', '')
         releaseDate = trackInfo['album']['releaseDate']
-        if trackInfo['artistTotalCount'] == "1" :
-            artist = trackInfo['artists']['artist']['artistName']
-        else:
+        
+        try:
+
             for artistTmp in trackInfo['artists']['artist']:
                 if artist != '' :
                     artist = artist + ", "
                 artist = artist + artistTmp['artistName']
+
+        except KeyError:
+            artist = trackInfo['artists']['artist']['artistName']
+        except TypeError:
+            artist = trackInfo['artists']['artist']['artistName']
         
         # genreNames = trackInfo['genreNames']
         discNumber = trackInfo['discNumber']
