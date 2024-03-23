@@ -27,6 +27,14 @@ logger = P.logger
 package_name = P.package_name
 ModelSetting = P.ModelSetting
 
+#selenium
+from selenium.webdriver.chrome.options import Options
+from selenium import webdriver
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
+
 
 #########################################################
 
@@ -893,33 +901,41 @@ class LogicDownload(LogicModuleBase):
         lastloginTime = P.ModelSetting.to_dict()['lastloginTime']
         
         if float(datetime.now().timestamp()) - float(lastloginTime) > 10800 or LogicDownload.session is None:
-            encnm, encpw = LogicDownload.encrypt(nid, npw)
-            bvsd_uuid = uuid.uuid4()
-            o = '{"a":"' + str(bvsd_uuid) + '","b":"1.3.4","h":"1f","i":{"a":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Whale/2.7.100.20 Safari/537.36"}}'  
-            encData = lzstring.LZString.compressToEncodedURIComponent(o)
-            bvsd = '{"uuid":"'+ str(bvsd_uuid) + '","encData":"'+ encData +'"}'
+            
+            
             session = requests.Session()
             
-            LogicDownload.data = {
-                'enctp': '1',
-                'svctype': '0',
-                'encnm': encnm,
-                'locale' : 'ko_KR',
-                'url': 'www.naver.com',
-                'smart_level': '1',
-                'encpw': encpw,
-                'bvsd': bvsd
-            }
-            resp = session.post('https://nid.naver.com/nidlogin.login', data=LogicDownload.data, headers=LogicDownload.headers)
+            if not LogicDownload.naver_login_chk( nid, session):
+                session = LogicDownload.naver_login_selenium( nid, npw )
+                
+            # encnm, encpw = LogicDownload.encrypt(nid, npw)
+            # bvsd_uuid = uuid.uuid4()
+            # o = '{"a":"' + str(bvsd_uuid) + '","b":"1.3.4","h":"1f","i":{"a":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Whale/2.7.100.20 Safari/537.36"}}'  
+            # encData = lzstring.LZString.compressToEncodedURIComponent(o)
+            # bvsd = '{"uuid":"'+ str(bvsd_uuid) + '","encData":"'+ encData +'"}'
+            
+            
+            # LogicDownload.data = {
+            #     'enctp': '1',
+            #     'svctype': '0',
+            #     'encnm': encnm,
+            #     'locale' : 'ko_KR',
+            #     'url': 'www.naver.com',
+            #     'smart_level': '1',
+            #     'encpw': encpw,
+            #     'bvsd': bvsd
+            # }
+            # resp = session.post('https://nid.naver.com/nidlogin.login', data=LogicDownload.data, headers=LogicDownload.headers)
 
-            from lxml.html import fromstring
-            doc  = fromstring(resp.text)
-            if(resp.text.find("location.replace")>-1):
+            # from lxml.html import fromstring
+            # doc  = fromstring(resp.text)
+            
+            if LogicDownload.naver_login_chk( nid, session):
                 logger.debug("로그인 성공")
                 P.ModelSetting.set("lastloginTime", str(datetime.now().timestamp()))
                 
                 
-                resp2 = requests.get('https://apis.naver.com/nmwebplayer/musicapiweb/device/VIBE_WEB/deviceId')
+                resp2 = session.get('https://apis.naver.com/nmwebplayer/musicapiweb/device/VIBE_WEB/deviceId')
                 logger.debug( resp2 )
                 if resp2.status_code == 200 :
                     dictionary = xmltodict.parse(resp2.text)
@@ -1047,3 +1063,75 @@ class LogicDownload(LogicModuleBase):
                  }
 
         return track
+
+    def naver_login_chk( id, req ):
+        response = req.get("https://apis.naver.com/vibeWeb/vibe-service-web-api/v2/users/me/profiles?type=SUMMARY")
+        try:
+            userId = response.json()['response']['result']['userId']
+        except:
+            userId = ""
+        if userId == id:
+            logger.debug(  "login 성공 ")
+            return True
+        else:
+            logger.debug(  "login 필요 ")
+            return False
+    
+    def naver_login_selenium(id, pw ):
+        logger.debug(  "naver_login_selenium 시작 ")
+        # 브라우저 꺼짐 방지 옵션
+        chrome_options = Options()
+        # chrome_options.add_experimental_option("detach", True)
+        chrome_options.add_argument('--headless')  # Headless 모드로 실행
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        # driver=webdriver.Chrome(options=chrome_options)
+        driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+        
+        # driver=webdriver.Chrome(ch options=chrome_options)
+        # /root/SJVA3/data/command
+
+        # 웹사이트 접속
+        driver.get("https://nid.naver.com/nidlogin.login?mode=form&url=https://vibe.naver.com/")
+
+        # WebDriverWait 객체 생성
+        wait = WebDriverWait(driver, 30)  # 최대 10초까지 대기
+
+        try:
+            # 클릭할 요소가 나타날 때까지 대기
+            # tag_id = wait.until(EC.element_to_be_clickable((By.ID, "id_line")))
+            # tag_pw = driver.find_element(By.ID, "pw_line")
+
+            driver.execute_script(
+                f"document.querySelector('input[id=\"id\"]').setAttribute('value', '%s')"%id
+            )
+            time.sleep(1)
+            driver.execute_script(
+                f"document.querySelector('input[id=\"pw\"]').setAttribute('value', '%s')"%pw
+            )
+            time.sleep(1)
+
+            login_btn = driver.find_element(By.ID, "log.login")
+            login_btn.click()
+            
+            # 페이지 로딩 완료 대기
+            WebDriverWait(driver, 10).until(
+                lambda driver: driver.execute_script('return document.readyState') == 'complete'
+            )
+            
+            btn_save = driver.find_element(By.ID, "new.save")
+            btn_save.click()
+            
+            s = requests.Session()
+            session_cookies = driver.get_cookies()
+            
+            for cookie in session_cookies:
+                s.cookies.set(cookie['name'], cookie['value'])
+            
+            return s
+        except:
+            logger.debug("naver_login_selenium 오류")
+        finally:
+            logger.debug("naver_login_selenium 종료")
+            # WebDriver 종료
+            driver.quit()
