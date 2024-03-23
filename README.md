@@ -1,4 +1,27 @@
 #### 오류 발생시 홈페이지에 로그와 함께 글작성 하시면 조치 하겠습니다.
+#### 2024.03.23
++ 네이버 로그인 셀레니움으로 변경
+  실행하여 셀레니움 설치 필요함
+  
+  ```bash
+  apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    gnupg \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+    && apt-get update && apt-get install -y \
+    google-chrome-stable \
+    && CHROME_VERSION=$(google-chrome-stable --version | awk '{print $3}' | cut -d '.' -f1) \
+    && CHROME_DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION") \
+    && wget -q -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip" \
+    && unzip /tmp/chromedriver.zip -d /usr/bin \
+    && chmod +x /usr/bin/chromedriver \
+    && rm /tmp/chromedriver.zip
+  ```
+  
 ##### 2022.10.13
 + 검색시 무한로딩 오류 수정
 ##### 2022.02.10
