@@ -1118,9 +1118,11 @@ class LogicDownload(LogicModuleBase):
             WebDriverWait(driver, 10).until(
                 lambda driver: driver.execute_script('return document.readyState') == 'complete'
             )
-            
-            btn_save = driver.find_element(By.ID, "new.save")
-            btn_save.click()
+            try:
+                btn_save = driver.find_element(By.ID, "new.save")
+                btn_save.click()
+            except:
+                print("기기등록버튼 없음.")
             
             s = requests.Session()
             session_cookies = driver.get_cookies()
