@@ -1122,7 +1122,7 @@ class LogicDownload(LogicModuleBase):
                 btn_save = driver.find_element(By.ID, "new.save")
                 btn_save.click()
             except:
-                print("기기등록버튼 없음.")
+                logger.debug("기기등록버튼 없음.")
             
             s = requests.Session()
             session_cookies = driver.get_cookies()
