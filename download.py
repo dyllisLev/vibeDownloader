@@ -1079,14 +1079,26 @@ class LogicDownload(LogicModuleBase):
     
     def naver_login_selenium(id, pw ):
         logger.debug(  "naver_login_selenium 시작 ")
+        
         # 브라우저 꺼짐 방지 옵션
-        chrome_options = Options()
+        # chrome_options = Options()
         # chrome_options.add_experimental_option("detach", True)
+        # chrome_options.add_argument('--headless')  # Headless 모드로 실행
+        # chrome_options.add_argument('--no-sandbox')
+        # chrome_options.add_argument('--disable-dev-shm-usage')
+        
+        
+        chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument('--headless')  # Headless 모드로 실행
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
-        # driver=webdriver.Chrome(options=chrome_options)
-        driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+        # 필요한 추가 옵션을 여기에 추가하세요
+
+        # 직접 executable_path를 전달하는 대신 Service 객체를 생성합니다.
+        service = Service(ChromeDriverManager().install())
+
+        # webdriver 생성자에 service 객체를 전달합니다.
+        driver = webdriver.Chrome(service=service, options=chrome_options)
         
         # driver=webdriver.Chrome(ch options=chrome_options)
         # /root/SJVA3/data/command
